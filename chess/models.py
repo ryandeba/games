@@ -36,10 +36,10 @@ def loadGameUsersByGame(game):
 	return GameUser.objects.filter(game = game)
 
 def loadPiecesByGame(game):
-	return resolvePieceToSpecificType(Piece.objects.filter(gameUser__game = game))
+	return Piece.objects.filter(gameUser__game = game)
 
 def loadPiecesByGameUser(gameUser):
-	return resolvePieceToSpecificType(Piece.objects.filter(gameUser = gameUser))
+	return Piece.objects.filter(gameUser = gameUser)
 
 def loadHistoryByGame(game):
 	return History.objects.filter(piece__gameUser__game = game)
@@ -55,28 +55,6 @@ def getPositionByOffset(startingPosition, offsetX, offsetY):
 	if 1 <= x + offsetX <= 8 and 1 <= y + offsetY <= 8:
 		return convertCoordinatesToPosition((x + offsetX, y + offsetY))
 	return ""
-
-def resolvePieceToSpecificType(pieces):
-	result = []
-	for piece in pieces:
-		if piece.type == PIECETYPE["PAWN"]:
-			actualPiece = Pawn()
-		elif piece.type == PIECETYPE["ROOK"]:
-			actualPiece = Rook()
-		elif piece.type == PIECETYPE["KNIGHT"]:
-			actualPiece = Knight()
-		elif piece.type == PIECETYPE["BISHOP"]:
-			actualPiece = Bishop()
-		elif piece.type == PIECETYPE["QUEEN"]:
-			actualPiece = Queen()
-		elif piece.type == PIECETYPE["KING"]:
-			actualPiece = King()
-		actualPiece.id = piece.id
-		actualPiece.gameUser = piece.gameUser
-		actualPiece.position = piece.position
-		actualPiece.type = piece.type
-		result.append(actualPiece)
-	return result
 
 def convertPositionToCoordinates(position):
 	return (XCOORDINATES.index(position[0]) + 1, int(position[1]))
@@ -97,12 +75,17 @@ class Game(models.Model):
 	def isFinished(self):
 		return self.status == GAMESTATUS["FINISHED"]
 
+	def getPieces(self):
+		if hasattr(self, "pieces") == False:
+			self.pieces = loadPiecesByGame(self)
+		return self.pieces
+
 	def getGameUserCurrentTurn(self):
 		history = loadHistoryByGame(self)
 		gameUsers = loadGameUsersByGame(self)
 
 		if len(history):
-			if gameUsers[0] == history[-1].gameUser:
+			if gameUsers[0] == history[history.count() - 1].piece.gameUser:
 				return gameUsers[1]
 			return gameUsers[0]
 
@@ -155,12 +138,127 @@ class Game(models.Model):
 					newPiece(gameUser = gameUser, position = position, type = type)
 
 	def getAvailableMoves(self):
+		#TODO: check if the user is in check, only allow moves that get the person out of check
 		result = []
 		if self.isActive():
 			for piece in loadPiecesByGameUser(self.getGameUserCurrentTurn()):
-				positions = piece.getLegalMovePositions()
-				result.append({"piece": piece, "positions": positions})
+				positions = self.getAvailableMovesForPiece(piece)
+				if len(positions):
+					result.append({"piece": piece, "positions": positions})
 		return result
+
+	def getAvailableMovesForPiece(self, piece):
+		result = []
+		if piece.isPawn():
+			result = self.getAvailableMovesForPiece_pawn(piece)
+		if piece.isRook():
+			result = self.getAvailableMovesForPiece_cardinal(piece, 8)
+		if piece.isKnight():
+			result = self.getAvailableMovesForPiece_knight(piece)
+		if piece.isBishop():
+			result = self.getAvailableMovesForPiece_diagonal(piece, 8)
+		if piece.isQueen():
+			result = self.getAvailableMovesForPiece_cardinal(piece, 8) + self.getAvailableMovesForPiece_diagonal(piece, 8)
+		if piece.isKing():
+			result = self.getAvailableMovesForPiece_cardinal(piece, 1) + self.getAvailableMovesForPiece_diagonal(piece, 1)
+			#TODO: add castling
+		return [position for position in result if position != '']
+
+	def getAvailableMovesForPiece_pawn(self, piece):
+		#TODO: add capture positions
+		result = []
+		if piece.isWhite():
+			position = getPositionByOffset(piece.position, 0, 1)
+		else:
+			position = getPositionByOffset(piece.position, 0, -1)
+		if self.getPieceAtPosition(position) == None:
+			result.append(position)
+
+		if piece.hasMoved() == False:
+			if piece.isWhite():
+				position = getPositionByOffset(piece.position, 0, 2)
+			else:
+				position = getPositionByOffset(piece.position, 0, -2)
+			if self.getPieceAtPosition(position) == None:
+				result.append(position)
+		return result
+
+	def getAvailableMovesForPiece_knight(self, piece):
+		result = []
+		for coordinates in [(2, 1), (-2, 1), (-2, -1), (2, -1), (1, 2), (-1, 2), (-1, -2), (1, -2)]:
+			x, y = coordinates
+			position = getPositionByOffset(piece.position, x, y)
+			if self.getPieceAtPosition(position) == None:
+				result.append(position)
+		return result
+
+	def getAvailableMovesForPiece_cardinal(self, piece, distance):
+		result = []
+		for i in range(1, distance + 1):
+			position = getPositionByOffset(piece.position, 0, i)
+			if self._appendPositionAndDetermineIfShouldContinue(position, piece, result) == False:
+				break
+		for i in range(1, distance + 1):
+			position = getPositionByOffset(piece.position, 0, -i)
+			if self._appendPositionAndDetermineIfShouldContinue(position, piece, result) == False:
+				break
+		for i in range(1, distance + 1):
+			position = getPositionByOffset(piece.position, i, 0)
+			if self._appendPositionAndDetermineIfShouldContinue(position, piece, result) == False:
+				break
+		for i in range(1, distance + 1):
+			position = getPositionByOffset(piece.position, -i, 0)
+			if self._appendPositionAndDetermineIfShouldContinue(position, piece, result) == False:
+				break
+		return result
+
+	def getAvailableMovesForPiece_diagonal(self, piece, distance):
+		result = []
+		for i in range(1, distance + 1):
+			position = getPositionByOffset(piece.position, i, i)
+			if self._appendPositionAndDetermineIfShouldContinue(position, piece, result) == False:
+				break
+		for i in range(1, distance + 1):
+			position = getPositionByOffset(piece.position, i, -i)
+			if self._appendPositionAndDetermineIfShouldContinue(position, piece, result) == False:
+				break
+		for i in range(1, distance + 1):
+			position = getPositionByOffset(piece.position, -i, -i)
+			if self._appendPositionAndDetermineIfShouldContinue(position, piece, result) == False:
+				break
+		for i in range(1, distance + 1):
+			position = getPositionByOffset(piece.position, -i, i)
+			if self._appendPositionAndDetermineIfShouldContinue(position, piece, result) == False:
+				break
+		return result
+
+	#TODO: please rename this or split it up. how embarassing
+	def _appendPositionAndDetermineIfShouldContinue(self, position, piece, result):
+		if self.positionIsOccupiedBySameColor(position, piece):
+			return False
+		if self.positionIsOccupiedByOtherColor(position, piece):
+			result.append(position)
+			return False
+		result.append(position)
+		return True
+
+	def positionIsOccupiedBySameColor(self, position, piece):
+		pieceAtPosition = self.getPieceAtPosition(position)
+		if pieceAtPosition and (pieceAtPosition.gameUser.color == piece.gameUser.color):
+			return True
+		return False
+
+	def positionIsOccupiedByOtherColor(self, position, piece):
+		pieceAtPosition = self.getPieceAtPosition(position)
+		if pieceAtPosition and (pieceAtPosition.gameUser.color != piece.gameUser.color):
+			return True
+		return False
+
+	def getPieceAtPosition(self, position):
+		for piece in self.getPieces():
+			if piece.position == position:
+				return piece
+		return None
 
 class GameUser(models.Model):
 	game = models.ForeignKey(Game)
@@ -178,11 +276,29 @@ class Piece(models.Model):
 	position = models.CharField(max_length = 2)
 	type = models.IntegerField()
 
-	def setPosition(self, toPosition):
+	def moveToPosition(self, toPosition):
 		fromPosition = self.position
 		self.position = toPosition
 		self.save()
 		newHistory(piece = self, fromPosition = fromPosition, toPosition = toPosition)
+
+	def isPawn(self):
+		return self.type == PIECETYPE["PAWN"]
+
+	def isRook(self):
+		return self.type == PIECETYPE["ROOK"]
+
+	def isKnight(self):
+		return self.type == PIECETYPE["KNIGHT"]
+
+	def isBishop(self):
+		return self.type == PIECETYPE["BISHOP"]
+
+	def isQueen(self):
+		return self.type == PIECETYPE["QUEEN"]
+
+	def isKing(self):
+		return self.type == PIECETYPE["KING"]
 
 	def isWhite(self):
 		return self.gameUser.isWhite()
@@ -192,83 +308,6 @@ class Piece(models.Model):
 
 	def hasMoved(self):
 		return getHistoryCountByPiece(self) > 0
-
-class Pawn(Piece):
-
-	def getLegalMovePositions(self):
-		offsetYModifier = 1
-		if self.isBlack():
-			offsetYModifier = -1
-		returnValue = [getPositionByOffset(self.position, 0, 1 * offsetYModifier)]
-		if self.hasMoved() == False:
-			returnValue.append(getPositionByOffset(self.position, 0, 2 * offsetYModifier))
-		return [x for x in returnValue if x != ""]
-
-	class Meta:
-		proxy = True
-
-class Rook(Piece):
-
-	def getLegalMovePositions(self):
-		returnValue = []
-		for i in range(1, 7):
-			for coordinates in [(i, 0), (i * -1, 0), (0, i), (0, i * -1)]:
-				x, y = coordinates
-				returnValue.append(getPositionByOffset(self.position, x, y))
-		return [x for x in returnValue if x != ""]
-
-	class Meta:
-		proxy = True
-
-class Knight(Piece):
-
-	def getLegalMovePositions(self):
-		returnValue = []
-		for coordinates in [(2, 1), (-2, 1), (-2, -1), (2, -1), (1, 2), (-1, 2), (-1, -2), (1, -2)]:
-			x, y = coordinates
-			returnValue.append(getPositionByOffset(self.position, x, y))
-		return [x for x in returnValue if x != ""]
-
-	class Meta:
-		proxy = True
-
-class Bishop(Piece):
-
-	def getLegalMovePositions(self):
-		returnValue = []
-		for i in range(1, 7):
-			for coordinates in [(i, i), (-i, i), (-i, -i), (i, -i)]:
-				x, y = coordinates
-				returnValue.append(getPositionByOffset(self.position, x, y))
-		return [x for x in returnValue if x != ""]
-
-	class Meta:
-		proxy = True
-
-class Queen(Piece):
-
-	def getLegalMovePositions(self):
-		returnValue = []
-		for i in range(1, 7):
-			for coordinates in [(i, i), (-i, i), (-i, -i), (i, -i), (i, 0), (-i, 0), (0, i), (0, -i)]:
-				x, y = coordinates
-				returnValue.append(getPositionByOffset(self.position, x, y))
-		return [x for x in returnValue if x != ""]
-
-	class Meta:
-		proxy = True
-
-class King(Piece):
-
-	def getLegalMovePositions(self):
-		returnValue = []
-		for coordinates in [(0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1)]:
-			x, y = coordinates
-			returnValue.append(getPositionByOffset(self.position, x, y))
-		return [x for x in returnValue if x != ""]
-
-	class Meta:
-		proxy = True
 
 class History(models.Model):
 	piece = models.ForeignKey(Piece)

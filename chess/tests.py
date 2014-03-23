@@ -90,89 +90,20 @@ class GameTests(TestCase):
 
 		self.assertEqual(True, game.getGameUserCurrentTurn().isWhite())
 
+	def test_getGameUserCurrentTurn_returnsBlackIfWhiteMovedLast(self):
+		game, user1, user2, gameUser1, gameUser2 = setupGame()
+
+		game.getPieceAtPosition("A2").moveToPosition("A3")
+
+		self.assertEqual(True, game.getGameUserCurrentTurn().isBlack())
+
 	def test_getAvailableMoves(self):
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
 
 		expectedResult = []
 		actualResult = game.getAvailableMoves()
 
-		self.assertEqual(expectedResult, actualResult)
-
-class PawnTests(TestCase):
-	
-	def test_getLegalMovePositions(self):
-		game, user1, user2, gameUser1, gameUser2 = setupGame()
-
-		whitePawn = Pawn(gameUser = gameUser1, position = "A2", type = PIECETYPE["PAWN"])
-		blackPawn = Pawn(gameUser = gameUser2, position = "A7", type = PIECETYPE["PAWN"])
-
-		self.assertEqual(["A3", "A4"], whitePawn.getLegalMovePositions())
-		self.assertEqual(["A6", "A5"], blackPawn.getLegalMovePositions())
-
-class RookTests(TestCase):
-	
-	def test_getLegalMovePositions(self):
-		game, user1, user2, gameUser1, gameUser2 = setupGame()
-		rook = Rook(gameUser = gameUser1, position = "D4", type = PIECETYPE["ROOK"])
-
-		expectedResult = ["D1", "D2", "D3", "D5", "D6", "D7", "D8", "A4", "B4", "C4", "E4", "F4", "G4", "H4"]
-		expectedResult.sort()
-		actualResult = rook.getLegalMovePositions()
-		actualResult.sort()
-
-		self.assertEqual(expectedResult, actualResult)
-
-class KnightTests(TestCase):
-	
-	def test_getLegalMovePositions(self):
-		game, user1, user2, gameUser1, gameUser2 = setupGame()
-		knight = Knight(gameUser = gameUser1, position = "D4", type = PIECETYPE["KNIGHT"])
-
-		expectedResult = ["E6", "E2", "F3", "F5", "C6", "C2", "B3", "B5"]
-		expectedResult.sort()
-		actualResult = knight.getLegalMovePositions()
-		actualResult.sort()
-
-		self.assertEqual(expectedResult, actualResult)
-
-class BishopTests(TestCase):
-	
-	def test_getLegalMovePositions(self):
-		game, user1, user2, gameUser1, gameUser2 = setupGame()
-		bishop = Bishop(gameUser = gameUser1, position = "D4", type = PIECETYPE["BISHOP"])
-
-		expectedResult = ["E5", "F6", "G7", "H8", "E3", "F2", "G1", "C5", "B6", "A7", "C3", "B2", "A1"]
-		expectedResult.sort()
-		actualResult = bishop.getLegalMovePositions()
-		actualResult.sort()
-
-		self.assertEqual(expectedResult, actualResult)
-
-class QueenTests(TestCase):
-	
-	def test_getLegalMovePositions(self):
-		game, user1, user2, gameUser1, gameUser2 = setupGame()
-		queen = Queen(gameUser = gameUser1, position = "D4", type = PIECETYPE["QUEEN"])
-
-		expectedResult = [
-			"D1", "D2", "D3", "D5", "D6", "D7", "D8", "A4", "B4", "C4", "E4", "F4", "G4", "H4",
-			"E5", "F6", "G7", "H8", "E3", "F2", "G1", "C5", "B6", "A7", "C3", "B2", "A1"
-		]
-		expectedResult.sort()
-		actualResult = queen.getLegalMovePositions()
-		actualResult.sort()
-
-		self.assertEqual(expectedResult, actualResult)
-
-class KingTests(TestCase):
-	
-	def test_getLegalMovePositions(self):
-		game, user1, user2, gameUser1, gameUser2 = setupGame()
-		king = King(gameUser = gameUser1, position = "D4", type = PIECETYPE["KING"])
-
-		expectedResult = ["D5", "E3", "E4", "E5", "D3", "C3", "C4", "C5"]
-		expectedResult.sort()
-		actualResult = king.getLegalMovePositions()
-		actualResult.sort()
-
-		self.assertEqual(expectedResult, actualResult)
+		self.maxDiff = None
+		#self.assertEqual([], actualResult)
+		self.assertTrue({'piece': game.getPieceAtPosition('A2'), 'positions': ['A3', 'A4']} in actualResult)
+		self.assertTrue({'piece': game.getPieceAtPosition('B1'), 'positions': ['C3', 'A3']} in actualResult)
