@@ -1,11 +1,9 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 
-from chess.models import GameService
+from chess.models import Game
 
 import json
 
-gameService = GameService()
-
 def index(request):
-	return HttpResponse(status = 200)
+	return render(request, 'chess/index.html', {})
