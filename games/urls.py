@@ -6,5 +6,6 @@ admin.autodiscover()
 import chess
 
 urlpatterns = patterns('',
-	 url(r'^$', 'chess.views.index'),
+	url(r'^accounts/login/$', 'django.contrib.auth.views.login'),
+	url(r'^$', 'chess.views.index'),
 )

@@ -9,6 +9,34 @@
 
 		<link rel="stylesheet" type="text/css" href="{% static 'chess/css/bootstrap.min.css' %}" />
 		<link rel="stylesheet" type="text/css" href="{% static 'chess/css/animate.css' %}" />
+		<style>
+			.chessboard {
+				font-size: 40px;
+			}
+			.chessboard td {
+				background-color: #aaa;
+				height: 60px;
+				text-align: center;
+				width: 60px;
+			}
+			.chessboard tr:nth-child(even) td:nth-child(even),
+			.chessboard tr:nth-child(odd) td:nth-child(odd) {
+				background-color: #666;
+			}
+			.chessboard tr:nth-child(9) td,
+			.chessboard tr td:nth-child(1) {
+				background-color: #fff !important;
+			}
+
+			.black { color: #000; }
+			.white { color: #fff; }
+			.pawn:after { content: "♟"; }
+			.rook:after { content: "♜"; }
+			.knight:after { content: "♞"; }
+			.bishop:after { content: "♝"; }
+			.queen:after { content: "♛"; }
+			.king:after { content: "♚"; }
+		</style>
 
 		<script src="{% static 'chess/js/vendor/jQuery.js' %}"></script>
 		<script src="{% static 'chess/js/vendor/jquery.cookie.js' %}"></script>
@@ -17,7 +45,12 @@
 		<script src="{% static 'chess/js/vendor/backbone.marionette.js' %}"></script>
 		<script src="{% static 'chess/js/vendor/bootstrap.js' %}"></script>
 
+		<script src="{% static 'chess/js/Chess.js' %}"></script>
+
 		<script>
+			$(function(){
+				Chess.start();
+			});
 		</script>
 	</head>
 	<body class="bg-default">
@@ -39,7 +72,16 @@
 			</div>
 		</header>
 
-		<div id="main" class="container" style="margin-bottom: 60px;"></div>
+		<div id="main" class="container" style="margin-bottom: 60px;">
+			<div class="row">
+				<div class="col-md-8">
+					<table class="chessboard">
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<script type="text/template" id="cellTemplate"> </script>
 
 	</body>
 </html>
