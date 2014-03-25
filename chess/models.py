@@ -32,6 +32,12 @@ def newHistory(piece, fromPosition, toPosition):
 def loadGameByID(id):
 	return Game.objects.get(id = id)
 
+def loadPendingGames():
+	return Game.objects.filter(status = GAMESTATUS['PENDING']).order_by("-id")
+
+def loadActiveGamesByUserID(userID):
+	return Game.objects.filter(status = GAMESTATUS['ACTIVE'], gameuser__user_id = userID).order_by("-id")
+
 def loadGameUsersByGame(game):
 	return GameUser.objects.filter(game = game)
 
@@ -43,6 +49,9 @@ def loadPiecesByGameUser(gameUser):
 
 def loadHistoryByGame(game):
 	return History.objects.filter(piece__gameUser__game = game)
+
+def loadHistoryByGameNewerThanHistoryID(game, history_id):
+	return History.objects.filter(piece__gameUser__game = game, id_gt = history_id)
 
 def loadHistoryByPiece(piece):
 	return History.objects.filter(piece = piece)
@@ -80,9 +89,18 @@ class Game(models.Model):
 			self.pieces = loadPiecesByGame(self)
 		return self.pieces
 
+	def getGameUsers(self):
+		return loadGameUsersByGame(self)
+
+	def getGamePieces(self):
+		return loadPiecesByGame(self)
+
+	def getHistory(self):
+		return loadHistoryByGame(self)
+
 	def getGameUserCurrentTurn(self):
 		history = loadHistoryByGame(self)
-		gameUsers = loadGameUsersByGame(self)
+		gameUsers = self.getGameUsers()
 
 		if len(history):
 			if gameUsers[0] == history[history.count() - 1].piece.gameUser:
@@ -106,7 +124,9 @@ class Game(models.Model):
 		color = COLOR["WHITE"]
 		if len(gameUsers) == 1 and gameUsers[0].color == COLOR["WHITE"]:
 			color = COLOR["BLACK"]
-		return newGameUser(game = self, user = user, color = color)
+		gameUser = newGameUser(game = self, user = user, color = color)
+		self.startGame()
+		return gameUser
 
 	def startGame(self):
 		if self.isPending() and self.gameuser_set.count() == 2:

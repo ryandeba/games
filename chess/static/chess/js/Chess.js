@@ -2,19 +2,52 @@ $(function(){
 	Chess = new Backbone.Marionette.Application();
 	var app = Chess;
 
-	app.addInitializer(function(){
-		new CellsView({collection: new Cells()}).render();
+	app.addRegions({
+		"mainRegion": "#main"
 	});
 
+	app.addInitializer(function(){
+		this.listenTo(this.vent, "newGame", newGame);
+		this.listenTo(this.vent, "showGame", showGame);
+
+		showLobby();
+	});
+
+	var showLobby = function(){
+		app.mainRegion.show(new LobbyView({collection: new LobbyGames()}));
+	};
+
+	var showGame = function(id){
+		app.mainRegion.show(new GameLayout({model: new Game({id: id})}));
+	};
+
+	var newGame = function(){
+		$.ajax({
+			url: "/newGame/",
+			success: function(response){
+				showGame(response.game_id);
+			}
+		});
+	};
+
+	//TODO: move this to Game
 	var syncPiecesToCells = function(pieces, cells){
 		cells.each(function(cell){
 			cell.set("piece", pieces.findWhere({position: cell.get("position")}));
 		});
 	};
 
+	var Game = Backbone.Model.extend({
+		initialize: function(){
+			this.set("cells", new Cells());
+			this.set("pieces", new Pieces());
+		}
+	});
+
 	var Piece = Backbone.Model.extend({
 		isBlack: function(){ return true; },
 		isWhite: function(){ return true; },
+
 		isPawn: function(){ return true; },
 		isRook: function(){ return false; },
 		isKnight: function(){ return false; },
@@ -40,6 +73,16 @@ $(function(){
 					this.add({position: position});
 				}
 			}
+		}
+	});
+
+	var GameLayout = Backbone.Marionette.Layout.extend({
+		onRender: function(){
+			this.chessboardRegion.show(new CellsView({collection: this.model.get("cells")}));
+		},
+		template: "#gameTemplate",
+		regions: {
+			"chessboardRegion": ".chessboard"
 		}
 	});
 
@@ -75,7 +118,6 @@ $(function(){
 	});
 
 	var CellsView = Backbone.Marionette.CollectionView.extend({
-		el: ".chessboard",
 		render: function(){
 			var $el = $("<div></div>");
 			for (var i = 0; i < 8; i++){
@@ -87,6 +129,58 @@ $(function(){
 			}
 			$el.append("<tr> <td></td> <td>A</td> <td>B</td> <td>C</td> <td>D</td> <td>E</td> <td>F</td> <td>G</td> <td>H</td> </tr>");
 			this.$el.html($el.children());
+		}
+	});
+
+	var LobbyGames = Backbone.Collection.extend({
+		initialize: function(){
+			this.refresh();
+		},
+		refresh: function(){
+			var self = this;
+			$.ajax({
+				url: "/lobby/",
+				success: function(response){
+					self.reset(response);
+				}
+			});
+		}
+	});
+
+	var LobbyGameView = Backbone.Marionette.ItemView.extend({
+		initialize: function(){
+			this.listenTo(this.model, "change", this.render);
+			this.listenTo(this.model, "remove", this.remove);
+		},
+		template: "#lobbyGameTemplate",
+		tagName: "li",
+		attributes: {
+			"class": "list-group-item"
+		},
+		events: {
+			"click": "showGame"
+		},
+		showGame: function(){
+			app.vent.trigger("showGame", this.model.get("id"));
+		}
+	});
+
+	var LobbyView = Backbone.Marionette.CompositeView.extend({
+		initialize: function(){
+			this.listenTo(this.collection, "reset", this.render);
+		},
+		events: {
+			"click .js-btn-refresh": "refresh",
+			"click .js-btn-newgame": "newGame"
+		},
+		template: "#lobbyTemplate",
+		itemView: LobbyGameView,
+		itemViewContainer: "#gamelist",
+		refresh: function(){
+			this.collection.refresh();
+		},
+		newGame: function(){
+			app.vent.trigger("newGame");
 		}
 	});
 });
