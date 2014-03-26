@@ -47,11 +47,13 @@ def game(request, game_id):
 		'status': game.status,
 		'players': [{
 			'id': gameUser.id,
-			'color': gameUser.color,
+			'color': gameUser.getColor(),
 			'username': gameUser.user.username,
 		} for gameUser in game.getGameUsers()],
 		'pieces': [{
 			'id': piece.id,
+			'player_id': piece.gameUser.id,
+			'type': piece.getPieceType(),
 			'position': piece.position,
 		} for piece in game.getPieces()],
 		'history': [{

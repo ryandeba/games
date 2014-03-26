@@ -285,6 +285,11 @@ class GameUser(models.Model):
 	user = models.ForeignKey(User)
 	color = models.IntegerField()
 
+	def getColor(self):
+		for key, value in COLOR.items():
+			if value == self.color:
+				return key
+
 	def isBlack(self):
 		return self.color == COLOR["BLACK"]
 
@@ -301,6 +306,11 @@ class Piece(models.Model):
 		self.position = toPosition
 		self.save()
 		newHistory(piece = self, fromPosition = fromPosition, toPosition = toPosition)
+
+	def getPieceType(self):
+		for key, value in PIECETYPE.items():
+			if value == self.type:
+				return key
 
 	def isPawn(self):
 		return self.type == PIECETYPE["PAWN"]

@@ -36,6 +36,10 @@
 			.bishop:after { content: "♝"; }
 			.queen:after { content: "♛"; }
 			.king:after { content: "♚"; }
+
+			.highlight {
+				background-color: yellow !important;
+			}
 		</style>
 
 		<script src="{% static 'chess/js/vendor/jQuery.js' %}"></script>
@@ -97,7 +101,6 @@
 		<script type="text/template" id="gameTemplate">
 			<div class="row">
 				<div class="col-md-8">
-					<h1>Game</h1>
 					<table class="chessboard">
 					</table>
 				</div>

@@ -18,7 +18,8 @@ $(function(){
 	};
 
 	var showGame = function(id){
-		app.mainRegion.show(new GameLayout({model: new Game({id: id})}));
+		game = new Game({id: id});
+		app.mainRegion.show(new GameLayout({model: game}));
 	};
 
 	var newGame = function(){
@@ -30,30 +31,118 @@ $(function(){
 		});
 	};
 
-	//TODO: move this to Game
-	var syncPiecesToCells = function(pieces, cells){
-		cells.each(function(cell){
-			cell.set("piece", pieces.findWhere({position: cell.get("position")}));
-		});
-	};
-
 	var Game = Backbone.Model.extend({
 		initialize: function(){
 			this.set("cells", new Cells());
 			this.set("pieces", new Pieces());
+			this.set("history", new HistoryCollection());
+			this.set("players", new Players());
+
+			this.listenTo(this.get("pieces"), "piece:showAvailableMoves", this.showAvailableMoves);
+
+			this.load();
+		},
+		defaults: {
+			'status': 0
+		},
+		load: function(){
+			var self = this;
+			$.ajax({
+				url: "/game/" + self.get("id"),
+				success: function(response){
+					self.set("status", response.status);
+
+					self.get("pieces").set(response.pieces);
+					self.get("history").set(response.history);
+					self.get("players").set(response.players);
+
+					self.syncColorsToPieces();
+					self.syncPiecesToCells();
+
+					if (self.get("status") == 0){
+						setTimeout(function(){ self.load(); }, 3000);
+					} else if (self.get("status") == 1){
+						setTimeout(function(){ self.poll(); }, 2000);
+					}
+				}
+			});
+		},
+		poll: function(){
+			var self = this;
+			$.ajax({
+				url: "/game/" + self.get("id") + "/" + self.getNewestHistoryID(),
+				success: function(response){
+					self.get("history").set(response.history);
+					self.syncAvailableMovesToPieces(response.moves);
+					setTimeout(function(){ self.poll(); }, 2000); //TODO: only poll if the it's the other persons turn
+				}
+			});
+		},
+		getNewestHistoryID: function(){
+			var result = 0;
+			var lastHistory = this.get("history").last();
+			if (lastHistory){
+				result = lastHistory.get("id");
+			}
+			return result;
+		},
+		syncColorsToPieces: function(){
+			var players = this.get("players");
+			this.get("pieces").each(function(piece){
+				var player = players.findWhere({id: piece.get("player_id")});
+				if (player){
+					piece.set("color", player.get("color"));
+				}
+			});
+		},
+		syncPiecesToCells: function(){
+			var pieces = this.get("pieces");
+			this.get("cells").each(function(cell){
+				cell.set("piece", pieces.findWhere({position: cell.get("position")}));
+			});
+		},
+		syncAvailableMovesToPieces: function(moves){
+			this.get("pieces").each(function(piece){
+				var movesForThisPiece = _.findWhere(moves, {id: piece.get("id")});
+				if (movesForThisPiece){
+					piece.set("moves", movesForThisPiece.positions);
+				} else {
+					piece.set("moves", []);
+				}
+			});
+		},
+		showAvailableMoves: function(piece){
+			var self = this;
+			self.get("cells").each(function(cell){
+				cell.set("highlight", false);
+			});
+
+			_.each(piece.get("moves"), function(position){
+				var cell = self.get("cells").findWhere({position: position});
+				if (cell){
+					cell.set("highlight", true);
+				}
+			});
 		}
 	});
 
-	var Piece = Backbone.Model.extend({
-		isBlack: function(){ return true; },
-		isWhite: function(){ return true; },
+	var Player = Backbone.Model.extend({
+	});
 
-		isPawn: function(){ return true; },
-		isRook: function(){ return false; },
-		isKnight: function(){ return false; },
-		isBishop: function(){ return false; },
-		isQueen: function(){ return false; },
-		isKing: function(){ return false; }
+	var Players = Backbone.Collection.extend({
+		model: Player
+	});
+
+	var Piece = Backbone.Model.extend({
+		isBlack: function(){ return this.get("color") == "BLACK"; },
+		isWhite: function(){ return this.get("color") == "WHITE"; },
+
+		isPawn: function(){ return this.get("type") == "PAWN"; },
+		isRook: function(){ return this.get("type") == "ROOK"; },
+		isKnight: function(){ return this.get("type") == "KNIGHT"; },
+		isBishop: function(){ return this.get("type") == "BISHOP"; },
+		isQueen: function(){ return this.get("type") == "QUEEN"; },
+		isKing: function(){ return this.get("type") == "KING"; }
 	});
 
 	var Pieces = Backbone.Collection.extend({
@@ -67,12 +156,22 @@ $(function(){
 		model: Cell,
 		initialize: function(){
 			var columns = "ABCDEFGH".split("");
-			for (var x = 0; x < 8; x++){
-				for (var y = 8; y > 0; y--){
+			for (var y = 8; y > 0; y--){
+				for (var x = 0; x < 8; x++){
 					var position = columns[x] + y;
 					this.add({position: position});
 				}
 			}
+		}
+	});
+
+	var History = Backbone.Model.extend({
+	});
+
+	var HistoryCollection = Backbone.Collection.extend({
+		model: History,
+		comparator: function(model){
+			return model.get("id") * -1;
 		}
 	});
 
@@ -96,7 +195,9 @@ $(function(){
 			"click": "onClick"
 		},
 		onClick: function(){
-			app.vent.trigger("cell:click", this.model);
+			if (this.model.get("piece")){
+				this.model.get("piece").trigger("piece:showAvailableMoves", this.model.get("piece"));
+			}
 		},
 		onRender: function(){
 			var piece = this.model.get("piece");
@@ -113,6 +214,12 @@ $(function(){
 				if (piece.isBishop()) this.$el.addClass("bishop");
 				if (piece.isQueen()) this.$el.addClass("queen");
 				if (piece.isKing()) this.$el.addClass("king");
+			}
+
+			if (this.model.get("highlight") == true){
+				this.$el.addClass("highlight");
+			} else {
+				this.$el.removeClass("highlight");
 			}
 		}
 	});
