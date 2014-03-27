@@ -73,10 +73,15 @@ def poll(request, game_id, history_id):
 			'piece_id': history.piece.id,
 			'fromPosition': history.fromPosition,
 			'toPosition': history.toPosition,
-		} for history in game.getHistory()],
+		} for history in game.getHistoryNewerThanHistoryID(history_id)],
 		'moves': [{
 			'id': move['piece'].id,
 			'positions': move['positions']
 		} for move in game.getAvailableMoves()]
 	}
 	return HttpResponse(json.dumps(response), content_type="application/json")
+
+def movePiece(request, game_id, piece_id, position):
+	game = loadGameByID(game_id)
+	game.movePieceToPosition(int(piece_id), position)
+	return HttpResponse(status = 200)

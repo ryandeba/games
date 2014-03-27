@@ -38,7 +38,10 @@ $(function(){
 			this.set("history", new HistoryCollection());
 			this.set("players", new Players());
 
-			this.listenTo(this.get("pieces"), "piece:showAvailableMoves", this.showAvailableMoves);
+			this.listenTo(this.get("pieces"), "piece:select", this.selectPiece);
+			this.listenTo(this, "change:selectedPiece", this.showAvailableMoves);
+			this.listenTo(this.get("cells"), "cell:moveHere", this.moveSelectedPieceToCell);
+			this.listenTo(this.get("history"), "add", this.syncHistoryToPieces);
 
 			this.load();
 		},
@@ -53,7 +56,7 @@ $(function(){
 					self.set("status", response.status);
 
 					self.get("pieces").set(response.pieces);
-					self.get("history").set(response.history);
+					self.get("history").set(response.history, {silent: true});
 					self.get("players").set(response.players);
 
 					self.syncColorsToPieces();
@@ -111,16 +114,36 @@ $(function(){
 				}
 			});
 		},
-		showAvailableMoves: function(piece){
+		syncHistoryToPieces: function(history){
+			this.get("pieces").findWhere({id: history.get("piece_id")}).set("position", history.get("toPosition"));
+		},
+		selectPiece: function(piece){
+			this.set("selectedPiece", piece);
+		},
+		showAvailableMoves: function(){
 			var self = this;
 			self.get("cells").each(function(cell){
-				cell.set("highlight", false);
+				cell.set("possibleMove", false);
 			});
 
+			var piece = self.get("selectedPiece");
+			if (piece == undefined){
+				return;
+			}
 			_.each(piece.get("moves"), function(position){
 				var cell = self.get("cells").findWhere({position: position});
 				if (cell){
-					cell.set("highlight", true);
+					cell.set("possibleMove", true);
+				}
+			});
+		},
+		moveSelectedPieceToCell: function(cell){
+			var self = this;
+			var selectedPiece = self.get("selectedPiece");
+			$.ajax({
+				url: "/game/" + self.get("id") + "/piece/" + selectedPiece.get("id") + "/move/" + cell.get("position"),
+				success: function(response){
+					return response;
 				}
 			});
 		}
@@ -196,7 +219,10 @@ $(function(){
 		},
 		onClick: function(){
 			if (this.model.get("piece")){
-				this.model.get("piece").trigger("piece:showAvailableMoves", this.model.get("piece"));
+				this.model.get("piece").trigger("piece:select", this.model.get("piece"));
+			}
+			if (this.model.get("possibleMove")){
+				this.model.trigger("cell:moveHere", this.model);
 			}
 		},
 		onRender: function(){
@@ -216,7 +242,7 @@ $(function(){
 				if (piece.isKing()) this.$el.addClass("king");
 			}
 
-			if (this.model.get("highlight") == true){
+			if (this.model.get("possibleMove") == true){
 				this.$el.addClass("highlight");
 			} else {
 				this.$el.removeClass("highlight");

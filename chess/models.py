@@ -51,7 +51,7 @@ def loadHistoryByGame(game):
 	return History.objects.filter(piece__gameUser__game = game)
 
 def loadHistoryByGameNewerThanHistoryID(game, history_id):
-	return History.objects.filter(piece__gameUser__game = game, id_gt = history_id)
+	return History.objects.filter(piece__gameUser__game = game, id__gt = history_id)
 
 def loadHistoryByPiece(piece):
 	return History.objects.filter(piece = piece)
@@ -95,8 +95,17 @@ class Game(models.Model):
 	def getGamePieces(self):
 		return loadPiecesByGame(self)
 
+	def getPieceByID(self, piece_id):
+		for piece in self.getPieces():
+			if piece.id == piece_id:
+				return piece
+		return None
+
 	def getHistory(self):
 		return loadHistoryByGame(self)
+
+	def getHistoryNewerThanHistoryID(self, history_id):
+		return loadHistoryByGameNewerThanHistoryID(self, history_id)
 
 	def getGameUserCurrentTurn(self):
 		history = loadHistoryByGame(self)
@@ -279,6 +288,17 @@ class Game(models.Model):
 			if piece.position == position:
 				return piece
 		return None
+
+	def movePieceToPosition(self, piece_id, position):
+		piece = self.getPieceByID(piece_id)
+		if self.canPieceMoveToPosition(piece, position):
+			piece.moveToPosition(position)
+
+	def canPieceMoveToPosition(self, piece, position):
+		for move in self.getAvailableMoves():
+			if move['piece'] == piece and position in move['positions']:
+				return True
+		return False
 
 class GameUser(models.Model):
 	game = models.ForeignKey(Game)
