@@ -41,8 +41,14 @@ def loadActiveGamesByUserID(userID):
 def loadGameUsersByGame(game):
 	return GameUser.objects.filter(game = game)
 
+def loadGameUsersByGameModifiedSince(game, datetime):
+	return GameUser.objects.filter(game = game, datetimeLastModified__gte = datetime)
+
 def loadPiecesByGame(game):
 	return Piece.objects.filter(gameUser__game = game)
+
+def loadPiecesByGameModifiedSince(game, datetime):
+	return Piece.objects.filter(gameUser__game = game, datetimeLastModified__gte = datetime)
 
 def loadPiecesByGameUser(gameUser):
 	return Piece.objects.filter(gameUser = gameUser)
@@ -74,6 +80,7 @@ def convertCoordinatesToPosition(coordinates):
 
 class Game(models.Model):
 	status = models.IntegerField(default = 0)
+	datetimeLastModified = models.DateTimeField(auto_now = True)
 
 	def isPending(self):
 		return self.status == GAMESTATUS["PENDING"]
@@ -92,8 +99,14 @@ class Game(models.Model):
 	def getGameUsers(self):
 		return loadGameUsersByGame(self)
 
-	def getGamePieces(self):
+	def getGameUsersModifiedSince(self, datetime):
+		return loadGameUsersByGameModifiedSince(self, datetime)
+
+	def getPieces(self):
 		return loadPiecesByGame(self)
+
+	def getPiecesModifiedSince(self, datetime):
+		return loadPiecesByGameModifiedSince(self, datetime)
 
 	def getPieceByID(self, piece_id):
 		for piece in self.getPieces():
@@ -304,6 +317,7 @@ class GameUser(models.Model):
 	game = models.ForeignKey(Game)
 	user = models.ForeignKey(User)
 	color = models.IntegerField()
+	datetimeLastModified = models.DateTimeField(auto_now = True)
 
 	def getColor(self):
 		for key, value in COLOR.items():
@@ -320,6 +334,7 @@ class Piece(models.Model):
 	gameUser = models.ForeignKey(GameUser)
 	position = models.CharField(max_length = 2)
 	type = models.IntegerField()
+	datetimeLastModified = models.DateTimeField(auto_now = True)
 
 	def moveToPosition(self, toPosition):
 		fromPosition = self.position
@@ -363,4 +378,4 @@ class History(models.Model):
 	piece = models.ForeignKey(Piece)
 	fromPosition = models.CharField(max_length = 2)
 	toPosition = models.CharField(max_length = 2)
-	datetimeCreated = models.DateTimeField(auto_now_add = True)
+	datetimeLastModified = models.DateTimeField(auto_now = True)

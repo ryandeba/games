@@ -13,7 +13,6 @@ urlpatterns = patterns('',
 	url(r'^lobby/$', 'chess.views.lobby'),
 	url(r'^newGame/$', 'chess.views.newGame_view'),
 	url(r'^game/(?P<game_id>\d+)/piece/(?P<piece_id>\d+)/move/(?P<position>.+)', 'chess.views.movePiece'),
-	url(r'^game/(?P<game_id>\d+)/(?P<history_id>\d+)', 'chess.views.poll'),
 	url(r'^game/(?P<game_id>\d+)', 'chess.views.game'),
 	url(r'^$', 'chess.views.index'),
 )

@@ -33,61 +33,40 @@ $(function(){
 
 	var Game = Backbone.Model.extend({
 		initialize: function(){
+			var self = this;
 			this.set("cells", new Cells());
 			this.set("pieces", new Pieces());
-			this.set("history", new HistoryCollection());
 			this.set("players", new Players());
 
 			this.listenTo(this.get("pieces"), "piece:select", this.selectPiece);
 			this.listenTo(this, "change:selectedPiece", this.showAvailableMoves);
 			this.listenTo(this.get("cells"), "cell:moveHere", this.moveSelectedPieceToCell);
-			this.listenTo(this.get("history"), "add", this.syncHistoryToPieces);
 
 			this.load();
+			setInterval(function(){ self.load(); }, 3000);
 		},
 		defaults: {
-			'status': 0
+			'status': 0,
+			'lastUpdated': 0
 		},
 		load: function(){
 			var self = this;
 			$.ajax({
-				url: "/game/" + self.get("id"),
+				url: "/game/" + self.get("id") + '?lastUpdated=' + self.get("lastUpdated"),
 				success: function(response){
-					self.set("status", response.status);
+					if (response.status == undefined) //TODO: implement a better way to check if there is no data
+						return;
 
+					self.set("status", response.status);
+					self.set("lastUpdated", response.lastUpdated);
 					self.get("pieces").set(response.pieces);
-					self.get("history").set(response.history, {silent: true});
 					self.get("players").set(response.players);
 
 					self.syncColorsToPieces();
 					self.syncPiecesToCells();
-
-					if (self.get("status") == 0){
-						setTimeout(function(){ self.load(); }, 3000);
-					} else if (self.get("status") == 1){
-						setTimeout(function(){ self.poll(); }, 2000);
-					}
-				}
-			});
-		},
-		poll: function(){
-			var self = this;
-			$.ajax({
-				url: "/game/" + self.get("id") + "/" + self.getNewestHistoryID(),
-				success: function(response){
-					self.get("history").set(response.history);
 					self.syncAvailableMovesToPieces(response.moves);
-					setTimeout(function(){ self.poll(); }, 2000); //TODO: only poll if the it's the other persons turn
 				}
 			});
-		},
-		getNewestHistoryID: function(){
-			var result = 0;
-			var lastHistory = this.get("history").last();
-			if (lastHistory){
-				result = lastHistory.get("id");
-			}
-			return result;
 		},
 		syncColorsToPieces: function(){
 			var players = this.get("players");
@@ -113,9 +92,6 @@ $(function(){
 					piece.set("moves", []);
 				}
 			});
-		},
-		syncHistoryToPieces: function(history){
-			this.get("pieces").findWhere({id: history.get("piece_id")}).set("position", history.get("toPosition"));
 		},
 		selectPiece: function(piece){
 			this.set("selectedPiece", piece);

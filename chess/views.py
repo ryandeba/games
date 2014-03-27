@@ -4,8 +4,15 @@ from django.http import HttpResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.utils.timezone import utc
 from chess.models import loadPendingGames, loadActiveGamesByUserID, newGame, loadGameByID
-import json
+import json, time, datetime
+
+def datetimeToEpoch(datetime):
+	return str(time.mktime(datetime.timetuple()) + float("0.%s" % datetime.microsecond))
+
+def timestampToDatetime(timestamp):
+	return datetime.datetime.utcfromtimestamp(float(timestamp)).replace(tzinfo = utc)
 
 @login_required
 def index(request):
@@ -42,43 +49,38 @@ def newGame_view(request):
 def game(request, game_id):
 	game = loadGameByID(game_id)
 	game.addUser(request.user)
-	response = {
-		'id': game.id,
-		'status': game.status,
-		'players': [{
-			'id': gameUser.id,
-			'color': gameUser.getColor(),
-			'username': gameUser.user.username,
-		} for gameUser in game.getGameUsers()],
-		'pieces': [{
-			'id': piece.id,
-			'player_id': piece.gameUser.id,
-			'type': piece.getPieceType(),
-			'position': piece.position,
-		} for piece in game.getPieces()],
-		'history': [{
-			'id': history.id,
-			'piece_id': history.piece.id,
-			'fromPosition': history.fromPosition,
-			'toPosition': history.toPosition,
-		} for history in game.getHistory()],
-	}
-	return HttpResponse(json.dumps(response), content_type="application/json")
 
-def poll(request, game_id, history_id):
-	game = loadGameByID(game_id)
-	response = {
-		'history': [{
-			'id': history.id,
-			'piece_id': history.piece.id,
-			'fromPosition': history.fromPosition,
-			'toPosition': history.toPosition,
-		} for history in game.getHistoryNewerThanHistoryID(history_id)],
-		'moves': [{
-			'id': move['piece'].id,
-			'positions': move['positions']
-		} for move in game.getAvailableMoves()]
-	}
+	datetimeLastUpdated = timestampToDatetime(request.GET.get("lastUpdated", "0"))
+
+	players = [{
+		'id': gameUser.id,
+		'color': gameUser.getColor(),
+		'username': gameUser.user.username,
+	} for gameUser in game.getGameUsersModifiedSince(datetimeLastUpdated)]
+
+	pieces = [{
+		'id': piece.id,
+		'player_id': piece.gameUser.id,
+		'type': piece.getPieceType(),
+		'position': piece.position,
+	} for piece in game.getPiecesModifiedSince(datetimeLastUpdated)]
+
+	response = {}
+	if (
+		datetimeToEpoch(game.datetimeLastModified) > datetimeToEpoch(datetimeLastUpdated)
+		or len(players) > 0
+		or len(pieces) > 0
+	):
+		response = {
+			'status': game.status,
+			'players': players,
+			'pieces': pieces,
+			'moves': [{
+				'id': move['piece'].id,
+				'positions': move['positions']
+			} for move in game.getAvailableMoves()],
+			'lastUpdated': datetimeToEpoch(datetime.datetime.utcnow()),
+		}
 	return HttpResponse(json.dumps(response), content_type="application/json")
 
 def movePiece(request, game_id, piece_id, position):
