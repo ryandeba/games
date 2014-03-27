@@ -59,8 +59,9 @@ $(function(){
 
 					self.set("status", response.status);
 					self.set("lastUpdated", response.lastUpdated);
-					self.get("pieces").set(response.pieces);
-					self.get("players").set(response.players);
+					self.set("selectedPiece", undefined);
+					self.get("pieces").set(response.pieces, {remove: false});
+					self.get("players").set(response.players, {remove: false});
 
 					self.syncColorsToPieces();
 					self.syncPiecesToCells();
@@ -202,6 +203,7 @@ $(function(){
 			}
 		},
 		onRender: function(){
+			this.$el.removeClass("white black pawn rook knight bishop queen king");
 			var piece = this.model.get("piece");
 			if (piece != undefined){
 				if (piece.isWhite()){

@@ -54,10 +54,10 @@ def loadPiecesByGameUser(gameUser):
 	return Piece.objects.filter(gameUser = gameUser)
 
 def loadHistoryByGame(game):
-	return History.objects.filter(piece__gameUser__game = game)
+	return History.objects.filter(piece__gameUser__game = game).order_by("id")
 
 def loadHistoryByGameNewerThanHistoryID(game, history_id):
-	return History.objects.filter(piece__gameUser__game = game, id__gt = history_id)
+	return History.objects.filter(piece__gameUser__game = game, id__gt = history_id).order_by("id")
 
 def loadHistoryByPiece(piece):
 	return History.objects.filter(piece = piece)
