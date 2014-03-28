@@ -191,36 +191,41 @@ class Game(models.Model):
 
 	def getAvailableMovesForPiece(self, piece):
 		result = []
-		if piece.isPawn():
+		if piece.position == "":
+			result = []
+		elif piece.isPawn():
 			result = self.getAvailableMovesForPiece_pawn(piece)
-		if piece.isRook():
+		elif piece.isRook():
 			result = self.getAvailableMovesForPiece_cardinal(piece, 8)
-		if piece.isKnight():
+		elif piece.isKnight():
 			result = self.getAvailableMovesForPiece_knight(piece)
-		if piece.isBishop():
+		elif piece.isBishop():
 			result = self.getAvailableMovesForPiece_diagonal(piece, 8)
-		if piece.isQueen():
+		elif piece.isQueen():
 			result = self.getAvailableMovesForPiece_cardinal(piece, 8) + self.getAvailableMovesForPiece_diagonal(piece, 8)
-		if piece.isKing():
+		elif piece.isKing():
 			result = self.getAvailableMovesForPiece_cardinal(piece, 1) + self.getAvailableMovesForPiece_diagonal(piece, 1)
 			#TODO: add castling
 		return [position for position in result if position != '']
 
 	def getAvailableMovesForPiece_pawn(self, piece):
-		#TODO: add capture positions
 		result = []
-		if piece.isWhite():
-			position = getPositionByOffset(piece.position, 0, 1)
-		else:
-			position = getPositionByOffset(piece.position, 0, -1)
+		y_direction = 1
+		if piece.isBlack():
+			y_direction = -1
+		position = getPositionByOffset(piece.position, 0, y_direction)
 		if self.getPieceAtPosition(position) == None:
 			result.append(position)
 
+		position = getPositionByOffset(piece.position, 1, y_direction)
+		if self.positionIsOccupiedByOtherColor(position, piece):
+			result.append(position)
+		position = getPositionByOffset(piece.position, -1, y_direction)
+		if self.positionIsOccupiedByOtherColor(position, piece):
+			result.append(position)
+
 		if piece.hasMoved() == False:
-			if piece.isWhite():
-				position = getPositionByOffset(piece.position, 0, 2)
-			else:
-				position = getPositionByOffset(piece.position, 0, -2)
+			position = getPositionByOffset(piece.position, 0, y_direction + y_direction)
 			if self.getPieceAtPosition(position) == None:
 				result.append(position)
 		return result
@@ -230,7 +235,7 @@ class Game(models.Model):
 		for coordinates in [(2, 1), (-2, 1), (-2, -1), (2, -1), (1, 2), (-1, 2), (-1, -2), (1, -2)]:
 			x, y = coordinates
 			position = getPositionByOffset(piece.position, x, y)
-			if self.getPieceAtPosition(position) == None:
+			if self.positionIsOccupiedBySameColor(position, piece) == False:
 				result.append(position)
 		return result
 
@@ -304,7 +309,10 @@ class Game(models.Model):
 
 	def movePieceToPosition(self, piece_id, position):
 		piece = self.getPieceByID(piece_id)
+		pieceAtPosition = self.getPieceAtPosition(position)
 		if self.canPieceMoveToPosition(piece, position):
+			if pieceAtPosition:
+				pieceAtPosition.moveToPosition("")
 			piece.moveToPosition(position)
 
 	def canPieceMoveToPosition(self, piece, position):

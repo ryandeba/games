@@ -119,9 +119,7 @@ $(function(){
 			var selectedPiece = self.get("selectedPiece");
 			$.ajax({
 				url: "/game/" + self.get("id") + "/piece/" + selectedPiece.get("id") + "/move/" + cell.get("position"),
-				success: function(response){
-					return response;
-				}
+				success: function(response){ self.load(); }
 			});
 		}
 	});
@@ -195,11 +193,11 @@ $(function(){
 			"click": "onClick"
 		},
 		onClick: function(){
-			if (this.model.get("piece")){
-				this.model.get("piece").trigger("piece:select", this.model.get("piece"));
-			}
 			if (this.model.get("possibleMove")){
 				this.model.trigger("cell:moveHere", this.model);
+			}
+			else if (this.model.get("piece")){
+				this.model.get("piece").trigger("piece:select", this.model.get("piece"));
 			}
 		},
 		onRender: function(){
