@@ -56,13 +56,10 @@ def loadPiecesByGameUser(gameUser):
 def loadHistoryByGame(game):
 	return History.objects.filter(piece__gameUser__game = game).order_by("id")
 
-def loadHistoryByGameNewerThanHistoryID(game, history_id):
-	return History.objects.filter(piece__gameUser__game = game, id__gt = history_id).order_by("id")
-
 def loadHistoryByPiece(piece):
 	return History.objects.filter(piece = piece)
 
-def getHistoryCountByPiece(piece):
+def loadHistoryCountByPiece(piece):
 	return History.objects.filter(piece = piece).count()
 
 def getPositionByOffset(startingPosition, offsetX, offsetY):
@@ -91,22 +88,25 @@ class Game(models.Model):
 	def isFinished(self):
 		return self.status == GAMESTATUS["FINISHED"]
 
+	def clone(self): # don't ever save a clone
+		clone = Game(id = self.id)
+		return clone
+
 	def getPieces(self):
 		if hasattr(self, "pieces") == False:
 			self.pieces = loadPiecesByGame(self)
 		return self.pieces
 
+	def getPiecesModifiedSince(self, datetime):
+		return loadPiecesByGameModifiedSince(self, datetime)
+
 	def getGameUsers(self):
-		return loadGameUsersByGame(self)
+		if hasattr(self, "gameUsers") == False:
+			self.gameUsers = loadGameUsersByGame(self)
+		return self.gameUsers
 
 	def getGameUsersModifiedSince(self, datetime):
 		return loadGameUsersByGameModifiedSince(self, datetime)
-
-	def getPieces(self):
-		return loadPiecesByGame(self)
-
-	def getPiecesModifiedSince(self, datetime):
-		return loadPiecesByGameModifiedSince(self, datetime)
 
 	def getPieceByID(self, piece_id):
 		for piece in self.getPieces():
@@ -115,13 +115,12 @@ class Game(models.Model):
 		return None
 
 	def getHistory(self):
-		return loadHistoryByGame(self)
-
-	def getHistoryNewerThanHistoryID(self, history_id):
-		return loadHistoryByGameNewerThanHistoryID(self, history_id)
+		if hasattr(self, "history") == False:
+			self.history = loadHistoryByGame(self)
+		return self.history
 
 	def getGameUserCurrentTurn(self):
-		history = loadHistoryByGame(self)
+		history = self.getHistory()
 		gameUsers = self.getGameUsers()
 
 		if len(history):
@@ -140,7 +139,7 @@ class Game(models.Model):
 			return
 
 		for gameUser in gameUsers:
-			if gameUser.user.id == user.id:
+			if gameUser.user == user:
 				return
 
 		color = COLOR["WHITE"]
@@ -180,14 +179,73 @@ class Game(models.Model):
 					newPiece(gameUser = gameUser, position = position, type = type)
 
 	def getAvailableMoves(self):
-		#TODO: check if the user is in check, only allow moves that get the person out of check
-		result = []
+		possibleMoves = []
 		if self.isActive():
-			for piece in loadPiecesByGameUser(self.getGameUserCurrentTurn()):
-				positions = self.getAvailableMovesForPiece(piece)
-				if len(positions):
-					result.append({"piece": piece, "positions": positions})
+			gameUser = self.getGameUserCurrentTurn()
+			possibleMoves = self.getPossibleMoves()
+			possibleMoves = self.filterMovesThatLeavesPlayerOutOfCheck(possibleMoves, gameUser)
+			possibleMoves = self.filterMovesForGameUser(possibleMoves, gameUser)
+		return possibleMoves
+
+	def gameUserIsInCheck(self, gameUser):
+		king = gameUser.getPieceOfType(PIECETYPE['KING'])
+		for move in self.getPossibleMovesForGameUser(self.getOtherGameUser(gameUser)):
+			for position in move['positions']:
+				if position == king.position:
+					return True
+		return False
+
+	def filterMovesForGameUser(self, moves, gameUser):
+		result = []
+		for move in moves:
+			if move['piece'].gameUser == gameUser:
+				result.append(move)
 		return result
+
+	def filterMovesThatLeavesPlayerOutOfCheck(self, moves, gameUser):
+		result = []
+		for move in moves:
+			for position in move['positions']:
+				if self.playerIsInCheckAfterMovingPieceToPosition(move['piece'], position) == False:
+					result.append(move)
+		return result
+
+	def playerIsInCheckAfterMovingPieceToPosition(self, piece, position):
+		result = False
+		originalPosition = piece.position
+		cloneGame = self.clone()
+		piece.position = position
+		if cloneGame.gameUserIsInCheck(piece.gameUser):
+			result = True
+		piece.position = originalPosition
+		return result
+
+	def getPossibleMoves(self):
+		if hasattr(self, "possibleMoves") == False:
+			self.possibleMoves = self.calculatePossibleMoves()
+		return self.possibleMoves
+
+	def calculatePossibleMoves(self):
+		possibleMoves = []
+		for piece in self.getPieces():
+			positions = self.getAvailableMovesForPiece(piece)
+			if len(positions):
+				possibleMoves.append({"piece": piece, "positions": positions})
+		return possibleMoves
+
+	def getPossibleMovesForGameUser(self, gameUser):
+		result = []
+		moves = self.getPossibleMoves()
+		for move in moves:
+			if move['piece'].gameUser == gameUser:
+				result.append(move)
+		return result
+
+	def getOtherGameUser(self, gameUser):
+		for thisGameUser in self.getGameUsers():
+			if thisGameUser != gameUser:
+				return thisGameUser
+		return None
 
 	def getAvailableMovesForPiece(self, piece):
 		result = []
@@ -338,11 +396,25 @@ class GameUser(models.Model):
 	def isWhite(self):
 		return self.color == COLOR["WHITE"]
 
+	def getPieces(self):
+		if hasattr(self, "pieces") == False:
+			self.pieces = loadPiecesByGameUser(self)
+		return self.pieces
+
+	def getPieceOfType(self, pieceType):
+		for piece in self.getPieces():
+			if piece.type == pieceType:
+				return piece
+		return None
+
 class Piece(models.Model):
 	gameUser = models.ForeignKey(GameUser)
 	position = models.CharField(max_length = 2)
 	type = models.IntegerField()
 	datetimeLastModified = models.DateTimeField(auto_now = True)
+
+	def __unicode__(self):
+		return self.getPieceType()
 
 	def moveToPosition(self, toPosition):
 		fromPosition = self.position
@@ -380,7 +452,7 @@ class Piece(models.Model):
 		return self.gameUser.isBlack()
 
 	def hasMoved(self):
-		return getHistoryCountByPiece(self) > 0
+		return loadHistoryCountByPiece(self) > 0
 
 class History(models.Model):
 	piece = models.ForeignKey(Piece)

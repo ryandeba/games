@@ -43,7 +43,6 @@ $(function(){
 			this.listenTo(this.get("cells"), "cell:moveHere", this.moveSelectedPieceToCell);
 
 			this.load();
-			setInterval(function(){ self.load(); }, 3000);
 		},
 		defaults: {
 			'status': 0,
@@ -53,6 +52,9 @@ $(function(){
 			var self = this;
 			$.ajax({
 				url: "/game/" + self.get("id") + '?lastUpdated=' + self.get("lastUpdated"),
+				complete: function(){
+					setTimeout(function(){ self.load(); }, 3000);
+				},
 				success: function(response){
 					if (response.status == undefined) //TODO: implement a better way to check if there is no data
 						return;
