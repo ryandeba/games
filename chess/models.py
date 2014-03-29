@@ -268,13 +268,20 @@ class Game(models.Model):
 
 	def getAvailableMovesForPiece_pawn(self, piece):
 		result = []
+
 		y_direction = 1
 		if piece.isBlack():
 			y_direction = -1
+
 		position = getPositionByOffset(piece.position, 0, y_direction)
 		if self.getPieceAtPosition(position) == None:
 			result.append(position)
+			if piece.hasMoved() == False:
+				position = getPositionByOffset(piece.position, 0, y_direction + y_direction)
+				if self.getPieceAtPosition(position) == None:
+					result.append(position)
 
+		#capturing
 		position = getPositionByOffset(piece.position, 1, y_direction)
 		if self.positionIsOccupiedByOtherColor(position, piece):
 			result.append(position)
@@ -282,10 +289,6 @@ class Game(models.Model):
 		if self.positionIsOccupiedByOtherColor(position, piece):
 			result.append(position)
 
-		if piece.hasMoved() == False:
-			position = getPositionByOffset(piece.position, 0, y_direction + y_direction)
-			if self.getPieceAtPosition(position) == None:
-				result.append(position)
 		return result
 
 	def getAvailableMovesForPiece_knight(self, piece):
