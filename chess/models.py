@@ -59,9 +59,6 @@ def loadHistoryByGame(game):
 def loadHistoryByPiece(piece):
 	return History.objects.filter(piece = piece)
 
-def loadHistoryCountByPiece(piece):
-	return History.objects.filter(piece = piece).count()
-
 def getPositionByOffset(startingPosition, offsetX, offsetY):
 	x, y = convertPositionToCoordinates(startingPosition)
 	if 1 <= x + offsetX <= 8 and 1 <= y + offsetY <= 8:
@@ -90,6 +87,9 @@ class Game(models.Model):
 
 	def clone(self): # don't ever save a clone
 		clone = Game(id = self.id)
+		clone.pieces = self.getPieces()
+		clone.gameUsers = self.getGameUsers()
+		clone.history = self.getHistory()
 		return clone
 
 	def getPieces(self):
@@ -188,7 +188,7 @@ class Game(models.Model):
 		return possibleMoves
 
 	def gameUserIsInCheck(self, gameUser):
-		king = gameUser.getPieceOfType(PIECETYPE['KING'])
+		king = gameUser.getPieceOfType(PIECETYPE['KING']) #TODO: this is problematic...
 		for move in self.getPossibleMovesForGameUser(self.getOtherGameUser(gameUser)):
 			for position in move['positions']:
 				if position == king.position:
@@ -454,8 +454,13 @@ class Piece(models.Model):
 	def isBlack(self):
 		return self.gameUser.isBlack()
 
+	def getHistory(self):
+		if hasattr(self, "history") == False:
+			self.history = loadHistoryByGame(self)
+		return self.history
+
 	def hasMoved(self):
-		return loadHistoryCountByPiece(self) > 0
+		return len(self.getHistory()) > 0
 
 class History(models.Model):
 	piece = models.ForeignKey(Piece)
