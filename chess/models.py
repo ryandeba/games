@@ -188,12 +188,17 @@ class Game(models.Model):
 		return possibleMoves
 
 	def gameUserIsInCheck(self, gameUser):
-		king = gameUser.getPieceOfType(PIECETYPE['KING']) #TODO: this is problematic...
+		king = self.getKingForGameUser(gameUser)
 		for move in self.getPossibleMovesForGameUser(self.getOtherGameUser(gameUser)):
 			for position in move['positions']:
 				if position == king.position:
 					return True
 		return False
+
+	def getKingForGameUser(self, gameUser):
+		for piece in self.getPieces():
+			if piece.isKing() and piece.gameUser == gameUser:
+				return piece
 
 	def filterMovesForGameUser(self, moves, gameUser):
 		result = []
@@ -403,12 +408,6 @@ class GameUser(models.Model):
 		if hasattr(self, "pieces") == False:
 			self.pieces = loadPiecesByGameUser(self)
 		return self.pieces
-
-	def getPieceOfType(self, pieceType):
-		for piece in self.getPieces():
-			if piece.type == pieceType:
-				return piece
-		return None
 
 class Piece(models.Model):
 	gameUser = models.ForeignKey(GameUser)
