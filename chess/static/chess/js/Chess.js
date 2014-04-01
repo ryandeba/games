@@ -38,6 +38,8 @@ $(function(){
 			this.set("pieces", new Pieces());
 			this.set("players", new Players());
 
+			this.set("pollTimeout", undefined);
+
 			this.listenTo(this.get("pieces"), "piece:select", this.selectPiece);
 			this.listenTo(this, "change:selectedPiece", this.showAvailableMoves);
 			this.listenTo(this.get("cells"), "cell:moveHere", this.moveSelectedPieceToCell);
@@ -50,10 +52,11 @@ $(function(){
 		},
 		load: function(){
 			var self = this;
+			window.clearTimeout(self.get("pollTimeout"));
 			$.ajax({
 				url: "/game/" + self.get("id") + '?lastUpdated=' + self.get("lastUpdated"),
 				complete: function(){
-					setTimeout(function(){ self.load(); }, 2000);
+					self.set("pollTimeout", setTimeout(function(){ self.load(); }, 2000));
 				},
 				success: function(response){
 					if (response.status == undefined) //TODO: implement a better way to check if there is no data
