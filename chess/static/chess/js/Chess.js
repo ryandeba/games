@@ -53,7 +53,7 @@ $(function(){
 			$.ajax({
 				url: "/game/" + self.get("id") + '?lastUpdated=' + self.get("lastUpdated"),
 				complete: function(){
-					setTimeout(function(){ self.load(); }, 3000);
+					setTimeout(function(){ self.load(); }, 2000);
 				},
 				success: function(response){
 					if (response.status == undefined) //TODO: implement a better way to check if there is no data

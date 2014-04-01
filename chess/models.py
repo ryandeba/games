@@ -468,7 +468,7 @@ class Piece(models.Model):
 
 	def getHistory(self):
 		if hasattr(self, "history") == False:
-			self.history = loadHistoryByGame(self)
+			self.history = loadHistoryByPiece(self)
 		return self.history
 
 	def hasMoved(self):
