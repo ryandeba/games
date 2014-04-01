@@ -45,10 +45,10 @@ def loadGameUsersByGameModifiedSince(game, datetime):
 	return GameUser.objects.filter(game = game, datetimeLastModified__gte = datetime)
 
 def loadPiecesByGame(game):
-	return Piece.objects.filter(gameUser__game = game)
+	return Piece.objects.filter(gameUser__game = game).prefetch_related("gameUser")
 
 def loadPiecesByGameModifiedSince(game, datetime):
-	return Piece.objects.filter(gameUser__game = game, datetimeLastModified__gte = datetime)
+	return Piece.objects.filter(gameUser__game = game, datetimeLastModified__gte = datetime).prefetch_related("gameUser")
 
 def loadPiecesByGameUser(gameUser):
 	return Piece.objects.filter(gameUser = gameUser)
@@ -216,21 +216,31 @@ class Game(models.Model):
 		return result
 
 	def playerIsInCheckAfterMovingPieceToPosition(self, piece, position):
+		#TODO: try to make fewer assumptions about what would happen by moving a piece
 		result = False
 		originalPosition = piece.position
 		cloneGame = self.clone()
+		pieceAtPosition = self.getPieceAtPosition(position)
+
+		if pieceAtPosition:
+			pieceAtPosition.position = ""
 		piece.position = position
+
 		if cloneGame.gameUserIsInCheck(piece.gameUser):
 			result = True
+
 		piece.position = originalPosition
+		if pieceAtPosition:
+			pieceAtPosition.position = position
+
 		return result
 
 	def getPossibleMoves(self):
 		if hasattr(self, "possibleMoves") == False:
-			self.possibleMoves = self.calculatePossibleMoves()
+			self.possibleMoves = self._calculatePossibleMoves()
 		return self.possibleMoves
 
-	def calculatePossibleMoves(self):
+	def _calculatePossibleMoves(self):
 		possibleMoves = []
 		for piece in self.getPieces():
 			positions = self.getAvailableMovesForPiece(piece)

@@ -8,6 +8,8 @@ from django.utils.timezone import utc
 from chess.models import loadPendingGames, loadActiveGamesByUserID, newGame, loadGameByID
 import json, time, datetime
 
+from django.db import connection
+
 def datetimeToEpoch(datetime):
 	return str(time.mktime(datetime.timetuple()) + float("0.%s" % datetime.microsecond))
 
@@ -81,6 +83,7 @@ def game(request, game_id):
 			} for move in game.getAvailableMoves() if move['piece'].gameUser.user == request.user],
 			'lastUpdated': datetimeToEpoch(datetime.datetime.utcnow()),
 		}
+	#response = connection.queries
 	return HttpResponse(json.dumps(response), content_type="application/json")
 
 def movePiece(request, game_id, piece_id, position):
