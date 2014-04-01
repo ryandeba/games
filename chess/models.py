@@ -210,9 +210,12 @@ class Game(models.Model):
 	def filterMovesThatLeavesPlayerOutOfCheck(self, moves, gameUser):
 		result = []
 		for move in moves:
+			positions = []
 			for position in move['positions']:
 				if self.playerIsInCheckAfterMovingPieceToPosition(move['piece'], position) == False:
-					result.append(move)
+					positions.append(position)
+			if len(positions):
+				result.append({'piece': move['piece'], 'positions': positions})
 		return result
 
 	def playerIsInCheckAfterMovingPieceToPosition(self, piece, position):
