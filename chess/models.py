@@ -66,6 +66,8 @@ def getPositionByOffset(startingPosition, offsetX, offsetY):
 	return ""
 
 def convertPositionToCoordinates(position):
+	if len(position) != 2 or position[0] not in "ABCDEFGH" or position[1] not in "12345678":
+		return (0, 0)
 	return (XCOORDINATES.index(position[0]) + 1, int(position[1]))
 
 def convertCoordinatesToPosition(coordinates):
