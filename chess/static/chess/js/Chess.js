@@ -2,6 +2,16 @@ $(function(){
 	Chess = new Backbone.Marionette.Application();
 	var app = Chess;
 
+	var Router = Backbone.Router.extend({
+		routes: {
+			"game/:id": "game",
+			"": "lobby"
+		},
+		game: function(id){ app.vent.trigger("showGame", id); },
+		lobby: function(){ app.vent.trigger("showLobby"); }
+	});
+	new Router();
+
 	app.addRegions({
 		"mainRegion": "#main"
 	});
@@ -9,8 +19,9 @@ $(function(){
 	app.addInitializer(function(){
 		this.listenTo(this.vent, "newGame", newGame);
 		this.listenTo(this.vent, "showGame", showGame);
+		this.listenTo(this.vent, "showLobby", showLobby);
 
-		showLobby();
+		Backbone.history.start();
 	});
 
 	var showLobby = function(){
@@ -43,6 +54,7 @@ $(function(){
 			this.listenTo(this.get("pieces"), "piece:select", this.selectPiece);
 			this.listenTo(this, "change:selectedPiece", this.showAvailableMoves);
 			this.listenTo(this.get("cells"), "cell:moveHere", this.moveSelectedPieceToCell);
+			this.listenTo(this, "destroy", this.clearPollTimeout);
 
 			this.load();
 		},
@@ -50,9 +62,12 @@ $(function(){
 			'status': 0,
 			'lastUpdated': 0
 		},
+		clearPollTimeout: function(){
+			window.clearTimeout(this.get("pollTimeout"));
+		},
 		load: function(){
 			var self = this;
-			window.clearTimeout(self.get("pollTimeout"));
+			self.clearPollTimeout();
 			$.ajax({
 				url: "/game/" + self.get("id") + '?lastUpdated=' + self.get("lastUpdated"),
 				complete: function(){
@@ -182,6 +197,9 @@ $(function(){
 		onRender: function(){
 			this.chessboardRegion.show(new CellsView({collection: this.model.get("cells")}));
 		},
+		onBeforeClose: function(){
+			this.model.trigger("destroy");
+		},
 		template: "#gameTemplate",
 		regions: {
 			"chessboardRegion": ".chessboard"
@@ -266,17 +284,7 @@ $(function(){
 			this.listenTo(this.model, "change", this.render);
 			this.listenTo(this.model, "remove", this.remove);
 		},
-		template: "#lobbyGameTemplate",
-		tagName: "li",
-		attributes: {
-			"class": "list-group-item"
-		},
-		events: {
-			"click": "showGame"
-		},
-		showGame: function(){
-			app.vent.trigger("showGame", this.model.get("id"));
-		}
+		template: "#lobbyGameTemplate"
 	});
 
 	var LobbyView = Backbone.Marionette.CompositeView.extend({
