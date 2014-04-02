@@ -434,6 +434,9 @@ class Piece(models.Model):
 	def moveToPosition(self, toPosition):
 		fromPosition = self.position
 		self.position = toPosition
+		x, y = convertPositionToCoordinates(self.position)
+		if self.isPawn() and ((self.isWhite() and y == 8) or (self.isBlack() and y == 1)):
+			self.type = PIECETYPE["QUEEN"]
 		self.save()
 		newHistory(piece = self, fromPosition = fromPosition, toPosition = toPosition)
 
