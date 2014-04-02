@@ -105,11 +105,19 @@
 		<script type="text/template" id="gameTemplate">
 			<div class="row">
 				<div class="col-md-7">
-					<table class="chessboard"></table>
+					<table id="game_chessboard" class="chessboard"></table>
 				</div>
-				<div class="col-md-6">
-				</div>
+				<div id="game_players" class="col-md-5"></div>
 			</div>
+		</script>
+
+		<script type="text/template" id="playersTemplate">
+			<h3>Players</h3>
+			<ol id="players_list"></ol>
+		</script>
+
+		<script type="text/template" id="playerTemplate">
+			<%= color %>: <%= username %> <% if (isMyTurn) { %><span class="badge">My Turn</span><% } %>
 		</script>
 
 		<script type="text/template" id="cellTemplate">

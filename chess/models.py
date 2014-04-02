@@ -221,7 +221,6 @@ class Game(models.Model):
 		return result
 
 	def playerIsInCheckAfterMovingPieceToPosition(self, piece, position):
-		#TODO: try to make fewer assumptions about what would happen by moving a piece
 		result = False
 		originalPosition = piece.position
 		cloneGame = self.clone()
@@ -436,9 +435,11 @@ class Piece(models.Model):
 	def moveToPosition(self, toPosition):
 		fromPosition = self.position
 		self.position = toPosition
+
 		x, y = convertPositionToCoordinates(self.position)
 		if self.isPawn() and ((self.isWhite() and y == 8) or (self.isBlack() and y == 1)):
 			self.type = PIECETYPE["QUEEN"]
+
 		self.save()
 		newHistory(piece = self, fromPosition = fromPosition, toPosition = toPosition)
 

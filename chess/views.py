@@ -80,6 +80,7 @@ def game(request, game_id):
 				'positions': move['positions']
 			} for move in game.getAvailableMoves() if move['piece'].gameUser.user == request.user],
 			'lastUpdated': datetimeToEpoch(datetime.datetime.utcnow()),
+			'currentturn_player_id': game.getGameUserCurrentTurn().id,
 		}
 	return HttpResponse(json.dumps(response), content_type="application/json")
 

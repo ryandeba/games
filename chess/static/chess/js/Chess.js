@@ -82,10 +82,12 @@ $(function(){
 					self.set("selectedPiece", undefined);
 					self.get("pieces").set(response.pieces, {remove: false});
 					self.get("players").set(response.players, {remove: false});
+					self.set("currentturn_player_id", response.currentturn_player_id);
 
 					self.syncColorsToPieces();
 					self.syncPiecesToCells();
 					self.syncAvailableMovesToPieces(response.moves);
+					self.syncDataToPlayers();
 				}
 			});
 		},
@@ -112,6 +114,13 @@ $(function(){
 				} else {
 					piece.set("moves", []);
 				}
+			});
+		},
+		syncDataToPlayers: function(){
+			var self = this;
+			self.get("players").each(function(player){
+				var isMyTurn = player.get("id") == self.get("currentturn_player_id");
+				player.set("isMyTurn", isMyTurn);
 			});
 		},
 		selectPiece: function(piece){
@@ -145,10 +154,27 @@ $(function(){
 	});
 
 	var Player = Backbone.Model.extend({
+		defaults: {
+			isMyTurn: false
+		}
 	});
 
 	var Players = Backbone.Collection.extend({
 		model: Player
+	});
+
+	var PlayerView = Backbone.Marionette.ItemView.extend({
+		initialize: function(){
+			this.listenTo(this.model, "change", this.render);
+		},
+		template: "#playerTemplate",
+		tagName: "li"
+	});
+
+	var PlayersView = Backbone.Marionette.CompositeView.extend({
+		template: "#playersTemplate",
+		itemView: PlayerView,
+		itemViewContainer: "#players_list"
 	});
 
 	var Piece = Backbone.Model.extend({
@@ -196,13 +222,15 @@ $(function(){
 	var GameLayout = Backbone.Marionette.Layout.extend({
 		onRender: function(){
 			this.chessboardRegion.show(new CellsView({collection: this.model.get("cells")}));
+			this.playersRegion.show(new PlayersView({collection: this.model.get("players")}));
 		},
 		onBeforeClose: function(){
 			this.model.trigger("destroy");
 		},
 		template: "#gameTemplate",
 		regions: {
-			"chessboardRegion": ".chessboard"
+			"chessboardRegion": "#game_chessboard",
+			"playersRegion": "#game_players"
 		}
 	});
 
