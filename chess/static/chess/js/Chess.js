@@ -195,6 +195,37 @@ $(function(){
 		model: Piece
 	});
 
+	var PieceView = Backbone.Marionette.ItemView.extend({
+		initialize: function(){
+			this.listenTo(this.model, "change", this.render);
+		},
+		tagName: "span",
+		template: "#pieceTemplate",
+		onRender: function(){
+			this.$el.removeClass("white black pawn rook knight bishop queen king");
+
+			if (this.model.isWhite()){
+				this.$el.addClass("white");
+			} else {
+				this.$el.addClass("black");
+			}
+
+			if (this.model.isPawn()) this.$el.addClass("pawn");
+			if (this.model.isRook()) this.$el.addClass("rook");
+			if (this.model.isKnight()) this.$el.addClass("knight");
+			if (this.model.isBishop()) this.$el.addClass("bishop");
+			if (this.model.isQueen()) this.$el.addClass("queen");
+			if (this.model.isKing()) this.$el.addClass("king");
+			if (this.model.get("position") == "") this.$el.addClass("captured");
+		}
+	});
+
+	var PiecesView = Backbone.Marionette.CompositeView.extend({
+		template: "#piecesTemplate",
+		itemView: PieceView,
+		itemViewContainer: "#pieces_list"
+	});
+
 	var Cell = Backbone.Model.extend({
 	});
 
@@ -240,6 +271,7 @@ $(function(){
 			this.chessboardRegion.show(new CellsView({collection: this.model.get("cells")}));
 			this.playersRegion.show(new PlayersView({collection: this.model.get("players")}));
 			this.historyRegion.show(new HistoryCollectionView({collection: this.model.get("history")}));
+			this.piecesRegion.show(new PiecesView({collection: this.model.get("pieces")}));
 		},
 		onBeforeClose: function(){
 			this.model.trigger("destroy");
@@ -248,7 +280,8 @@ $(function(){
 		regions: {
 			"chessboardRegion": "#game_chessboard",
 			"playersRegion": "#game_players",
-			"historyRegion": "#game_history"
+			"historyRegion": "#game_history",
+			"piecesRegion": "#game_pieces"
 		}
 	});
 

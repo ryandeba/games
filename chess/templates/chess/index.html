@@ -38,6 +38,7 @@
 			.bishop:after { content: "♝"; }
 			.queen:after { content: "♛"; }
 			.king:after { content: "♚"; }
+			.captured { text-decoration: line-through; }
 
 			.highlight {
 				background-color: yellow !important;
@@ -108,6 +109,7 @@
 					<table id="game_chessboard" class="chessboard"></table>
 				</div>
 				<div id="game_players" class="col-md-5"></div>
+				<div id="game_pieces" class="col-md-5"></div>
 				<div id="game_history" class="col-md-5"></div>
 			</div>
 		</script>
@@ -118,11 +120,21 @@
 		</script>
 
 		<script type="text/template" id="playerTemplate">
-			<%= color %>: <%= username %> <% if (isMyTurn) { %><span class="badge">My Turn</span><% } %>
+			<%= color %>: <%= username %> <% if (isMyTurn) { %><span class="badge">!</span><% } %>
+		</script>
+
+		<script type="text/template" id="piecesTemplate">
+			<h3>Pieces</h3>
+			<div class="well" style="background-color: #bbb; font-size: 23px;">
+				<div id="pieces_list"></div>
+			</div>
+		</script>
+
+		<script type="text/template" id="pieceTemplate">
 		</script>
 
 		<script type="text/template" id="historyListTemplate">
-			<h3>Move History</h3>
+			<h3>Moves</h3>
 			<ol id="history_list"></ol>
 		</script>
 
