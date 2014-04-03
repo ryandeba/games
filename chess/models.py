@@ -56,6 +56,9 @@ def loadPiecesByGameUser(gameUser):
 def loadHistoryByGame(game):
 	return History.objects.filter(piece__gameUser__game = game).order_by("id")
 
+def loadHistoryByGameModifiedSince(game, datetime):
+	return History.objects.filter(piece__gameUser__game = game, datetimeLastModified__gte = datetime)
+
 def loadHistoryByPiece(piece):
 	return History.objects.filter(piece = piece)
 
@@ -120,6 +123,9 @@ class Game(models.Model):
 		if hasattr(self, "history") == False:
 			self.history = loadHistoryByGame(self)
 		return self.history
+
+	def getHistoryModifiedSince(self, datetime):
+		return loadHistoryByGameModifiedSince(self, datetime)
 
 	def getGameUserCurrentTurn(self):
 		history = self.getHistory()

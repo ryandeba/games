@@ -48,6 +48,7 @@ $(function(){
 			this.set("cells", new Cells());
 			this.set("pieces", new Pieces());
 			this.set("players", new Players());
+			this.set("history", new HistoryCollection());
 
 			this.set("pollTimeout", undefined);
 
@@ -82,6 +83,7 @@ $(function(){
 					self.set("selectedPiece", undefined);
 					self.get("pieces").set(response.pieces, {remove: false});
 					self.get("players").set(response.players, {remove: false});
+					self.get("history").set(response.history, {remove: false});
 					self.set("currentturn_player_id", response.currentturn_player_id);
 
 					self.syncColorsToPieces();
@@ -215,14 +217,29 @@ $(function(){
 	var HistoryCollection = Backbone.Collection.extend({
 		model: History,
 		comparator: function(model){
-			return model.get("id") * -1;
+			return parseInt(model.get("id"));
 		}
+	});
+
+	var HistoryView = Backbone.Marionette.ItemView.extend({
+		initialize: function(){
+			this.listenTo(this.model, "change", this.render);
+		},
+		template: "#historyTemplate",
+		tagName: "li"
+	});
+
+	var HistoryCollectionView = Backbone.Marionette.CompositeView.extend({
+		template: "#historyListTemplate",
+		itemView: HistoryView,
+		itemViewContainer: "#history_list"
 	});
 
 	var GameLayout = Backbone.Marionette.Layout.extend({
 		onRender: function(){
 			this.chessboardRegion.show(new CellsView({collection: this.model.get("cells")}));
 			this.playersRegion.show(new PlayersView({collection: this.model.get("players")}));
+			this.historyRegion.show(new HistoryCollectionView({collection: this.model.get("history")}));
 		},
 		onBeforeClose: function(){
 			this.model.trigger("destroy");
@@ -230,7 +247,8 @@ $(function(){
 		template: "#gameTemplate",
 		regions: {
 			"chessboardRegion": "#game_chessboard",
-			"playersRegion": "#game_players"
+			"playersRegion": "#game_players",
+			"historyRegion": "#game_history"
 		}
 	});
 

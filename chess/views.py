@@ -65,6 +65,13 @@ def game(request, game_id):
 		'position': piece.position,
 	} for piece in game.getPiecesModifiedSince(datetimeLastUpdated)]
 
+	history = [{
+		'id': hist.id,
+		'piece_id': hist.piece_id,
+		'from': hist.fromPosition,
+		'to': hist.toPosition,
+	} for hist in game.getHistoryModifiedSince(datetimeLastUpdated)]
+
 	response = {}
 	if (
 		datetimeToEpoch(game.datetimeLastModified) > datetimeToEpoch(datetimeLastUpdated)
@@ -75,6 +82,7 @@ def game(request, game_id):
 			'status': game.status,
 			'players': players,
 			'pieces': pieces,
+			'history': history,
 			'moves': [{
 				'id': move['piece'].id,
 				'positions': move['positions']

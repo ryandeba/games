@@ -108,6 +108,7 @@
 					<table id="game_chessboard" class="chessboard"></table>
 				</div>
 				<div id="game_players" class="col-md-5"></div>
+				<div id="game_history" class="col-md-5"></div>
 			</div>
 		</script>
 
@@ -118,6 +119,15 @@
 
 		<script type="text/template" id="playerTemplate">
 			<%= color %>: <%= username %> <% if (isMyTurn) { %><span class="badge">My Turn</span><% } %>
+		</script>
+
+		<script type="text/template" id="historyListTemplate">
+			<h3>Move History</h3>
+			<ol id="history_list"></ol>
+		</script>
+
+		<script type="text/template" id="historyTemplate">
+			From: <%= from %> | To: <%= to %>
 		</script>
 
 		<script type="text/template" id="cellTemplate">
