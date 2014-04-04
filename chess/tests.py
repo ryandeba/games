@@ -107,3 +107,24 @@ class GameTests(TestCase):
 		#self.assertEqual([], actualResult)
 		self.assertTrue({'piece': game.getPieceAtPosition('A2'), 'positions': ['A3', 'A4']} in actualResult)
 		self.assertTrue({'piece': game.getPieceAtPosition('B1'), 'positions': ['C3', 'A3']} in actualResult)
+
+	def test_castling(self):
+		game, user1, user2, gameUser1, gameUser2 = setupGame()
+
+		game.getPieceAtPosition("F1").position = ""
+		game.getPieceAtPosition("G1").position = ""
+		game.getPieceAtPosition("D1").position = ""
+		game.getPieceAtPosition("C1").position = ""
+		game.getPieceAtPosition("B1").position = ""
+
+		game.getPieceAtPosition("F8").position = ""
+		game.getPieceAtPosition("G8").position = ""
+		game.getPieceAtPosition("D8").position = ""
+		game.getPieceAtPosition("C8").position = ""
+		game.getPieceAtPosition("B8").position = ""
+
+		king = game.getPieceAtPosition("E1")
+		self.assertEqual(["F1", "D1", "G1", "C1"], game.getAvailableMovesForPiece(king))
+
+		king = game.getPieceAtPosition("E8")
+		self.assertEqual(["F8", "D8", "G8", "C8"], game.getAvailableMovesForPiece(king))

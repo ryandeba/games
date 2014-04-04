@@ -13,6 +13,7 @@ PIECETYPE = {
 }
 XCOORDINATES = ["A","B","C","D","E","F","G","H"]
 
+#TODO: when calling any 'new' function, delete any preloaded data on associated objects
 def newGame():
 	game = Game.objects.create(status = GAMESTATUS["PENDING"])
 	return game
@@ -45,7 +46,7 @@ def loadGameUsersByGameModifiedSince(game, datetime):
 	return GameUser.objects.filter(game = game, datetimeLastModified__gte = datetime)
 
 def loadPiecesByGame(game):
-	return Piece.objects.filter(gameUser__game = game).prefetch_related("gameUser")
+	return Piece.objects.filter(gameUser__game = game).prefetch_related("gameUser").order_by("-id")
 
 def loadPiecesByGameModifiedSince(game, datetime):
 	return Piece.objects.filter(gameUser__game = game, datetimeLastModified__gte = datetime).prefetch_related("gameUser")
@@ -235,11 +236,13 @@ class Game(models.Model):
 		if pieceAtPosition:
 			pieceAtPosition.position = ""
 		piece.position = position
+		piece.mockMove = True
 
 		if cloneGame.gameUserIsInCheck(piece.gameUser):
 			result = True
 
 		piece.position = originalPosition
+		del piece.mockMove
 		if pieceAtPosition:
 			pieceAtPosition.position = position
 
@@ -287,8 +290,7 @@ class Game(models.Model):
 		elif piece.isQueen():
 			result = self.getAvailableMovesForPiece_cardinal(piece, 8) + self.getAvailableMovesForPiece_diagonal(piece, 8)
 		elif piece.isKing():
-			result = self.getAvailableMovesForPiece_cardinal(piece, 1) + self.getAvailableMovesForPiece_diagonal(piece, 1)
-			#TODO: add castling
+			result = self.getAvailableMovesForPiece_king(piece)
 		return [position for position in result if position != '']
 
 	def getAvailableMovesForPiece_pawn(self, piece):
@@ -365,6 +367,36 @@ class Game(models.Model):
 				break
 		return result
 
+	def getAvailableMovesForPiece_king(self, piece):
+		result = self.getAvailableMovesForPiece_cardinal(piece, 1)
+		result += self.getAvailableMovesForPiece_diagonal(piece, 1)
+
+		if piece.hasMoved() == False and piece.gameUser.has_been_in_check() == False:
+			y = '1'
+			if piece.isBlack():
+				y = '8'
+			if (
+				self.getPieceAtPosition('F' + y) == None
+				and self.getPieceAtPosition('G' + y) == None
+				and self.getPieceAtPosition('H' + y)
+				and self.getPieceAtPosition('H' + y).hasMoved() == False
+				and self.playerIsInCheckAfterMovingPieceToPosition(piece, 'F' + y) == False
+				and self.playerIsInCheckAfterMovingPieceToPosition(piece, 'G' + y) == False
+			):
+				result += ['G' + y]
+			if (
+				self.getPieceAtPosition('D' + y) == None
+				and self.getPieceAtPosition('C' + y) == None
+				and self.getPieceAtPosition('B' + y) == None
+				and self.getPieceAtPosition('A' + y)
+				and self.getPieceAtPosition('A' + y).hasMoved() == False
+				and self.playerIsInCheckAfterMovingPieceToPosition(piece, 'D' + y) == False
+				and self.playerIsInCheckAfterMovingPieceToPosition(piece, 'C' + y) == False
+			):
+				result += ['C' + y]
+
+		return result
+
 	#TODO: please rename this or split it up. how embarassing
 	def _appendPositionAndDetermineIfShouldContinue(self, position, piece, result):
 		if self.positionIsOccupiedBySameColor(position, piece):
@@ -395,8 +427,8 @@ class Game(models.Model):
 
 	def movePieceToPosition(self, piece_id, position):
 		piece = self.getPieceByID(piece_id)
-		pieceAtPosition = self.getPieceAtPosition(position)
 		if self.canPieceMoveToPosition(piece, position):
+			pieceAtPosition = self.getPieceAtPosition(position)
 			if pieceAtPosition:
 				pieceAtPosition.moveToPosition("")
 			piece.moveToPosition(position)
@@ -411,6 +443,7 @@ class GameUser(models.Model):
 	game = models.ForeignKey(Game)
 	user = models.ForeignKey(User)
 	color = models.IntegerField()
+	hasBeenInCheck = models.BooleanField(default = False)
 	datetimeLastModified = models.DateTimeField(auto_now = True)
 
 	def getColor(self):
@@ -428,6 +461,9 @@ class GameUser(models.Model):
 		if hasattr(self, "pieces") == False:
 			self.pieces = loadPiecesByGameUser(self)
 		return self.pieces
+
+	def has_been_in_check(self):
+		return bool(self.hasBeenInCheck)
 
 class Piece(models.Model):
 	gameUser = models.ForeignKey(GameUser)
@@ -484,6 +520,8 @@ class Piece(models.Model):
 		return self.history
 
 	def hasMoved(self):
+		if hasattr(self, "mockMove"):
+			return True
 		return len(self.getHistory()) > 0
 
 class History(models.Model):
