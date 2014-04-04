@@ -35,7 +35,7 @@ def lobby(request):
 	for game in load_pending_games() | load_active_games_by_user_id(request.user.id):
 		responseData.append({
 			"id": game.id,
-			"users": [gameUser.user.username for gameUser in game.getGameUsers()],
+			"users": [gameUser.user.username for gameUser in game.get_gameusers()],
 		})
 	return HttpResponse(json.dumps(responseData), content_type="application/json")
 
@@ -43,12 +43,12 @@ def newGame_view(request):
 	if request.user.is_authenticated() == False:
 		return HttpResponse(status_code = 401)
 	game = new_game()
-	game.addUser(request.user)
+	game.add_user(request.user)
 	return HttpResponse(json.dumps({'game_id': game.id}), content_type="application/json")
 
 def game(request, game_id):
 	game = load_game_by_id(game_id)
-	game.addUser(request.user)
+	game.add_user(request.user)
 
 	datetimeLastUpdated = timestampToDatetime(request.GET.get("lastUpdated", "0"))
 
@@ -56,21 +56,21 @@ def game(request, game_id):
 		'id': gameUser.id,
 		'color': gameUser.get_color(),
 		'username': gameUser.user.username,
-	} for gameUser in game.getGameUsersModifiedSince(datetimeLastUpdated)]
+	} for gameUser in game.get_gameusers_modified_since(datetimeLastUpdated)]
 
 	pieces = [{
 		'id': piece.id,
 		'player_id': piece.gameUser.id,
-		'type': piece.getPieceType(),
+		'type': piece.get_type(),
 		'position': piece.position,
-	} for piece in game.getPiecesModifiedSince(datetimeLastUpdated)]
+	} for piece in game.get_pieces_modified_since(datetimeLastUpdated)]
 
 	history = [{
 		'id': hist.id,
 		'piece_id': hist.piece_id,
 		'from': hist.fromPosition,
 		'to': hist.toPosition,
-	} for hist in game.getHistoryModifiedSince(datetimeLastUpdated)]
+	} for hist in game.get_history_modified_since(datetimeLastUpdated)]
 
 	response = {}
 	if (
@@ -86,9 +86,9 @@ def game(request, game_id):
 			'moves': [{
 				'id': move['piece'].id,
 				'positions': move['positions']
-			} for move in game.getAvailableMoves() if move['piece'].gameUser.user == request.user],
+			} for move in game.get_available_moves() if move['piece'].gameUser.user == request.user],
 			'lastUpdated': datetimeToEpoch(datetime.datetime.utcnow()),
-			'currentturn_player_id': game.getGameUserCurrentTurn().id,
+			'currentturn_player_id': game.get_gameuser_current_turn().id,
 		}
 	return HttpResponse(json.dumps(response), content_type="application/json")
 

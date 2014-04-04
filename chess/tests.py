@@ -6,9 +6,9 @@ def setupGame():
 	game = new_game()
 	user1 = new_user(username = "1")
 	user2 = new_user(username = "2")
-	gameUser1 = game.addUser(user1)
-	gameUser2 = game.addUser(user2)
-	game.startGame()
+	gameUser1 = game.add_user(user1)
+	gameUser2 = game.add_user(user2)
+	game.start()
 	return (game, user1, user2, gameUser1, gameUser2)
 
 class UtilityTests(TestCase):
@@ -46,62 +46,62 @@ class UtilityTests(TestCase):
 
 class GameTests(TestCase):
 
-	def test_addUserToGame(self):
+	def test_add_userToGame(self):
 		game = Game.objects.create()
 		user1 = User.objects.create(username = "1")
 		user2 = User.objects.create(username = "2")
 		user3 = User.objects.create(username = "3")
 
-		gameUser1 = game.addUser(user1)
-		gameUserNone = game.addUser(user1)
-		gameUser2 = game.addUser(user2)
-		gameUser3 = game.addUser(user3)
+		gameUser1 = game.add_user(user1)
+		gameUserNone = game.add_user(user1)
+		gameUser2 = game.add_user(user2)
+		gameUser3 = game.add_user(user3)
 
 		self.assertEqual(False, gameUser1.is_black())
 		self.assertEqual(None, gameUserNone)
 		self.assertEqual(True, gameUser2.is_black())
 		self.assertEqual(None, gameUser3)
 
-	def test_startGame(self):
+	def test_start(self):
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
 
 		self.assertEqual(True, game.is_active())
 
-	def test_startGame_statusIsNotChangedIfStatusIsNotPending(self):
+	def test_start_statusIsNotChangedIfStatusIsNotPending(self):
 		game = new_game()
 		game.status = GAMESTATUS["FINISHED"]
 		user1 = User.objects.create(username = "1")
 		user2 = User.objects.create(username = "2")
 
-		game.addUser(user1)
-		game.addUser(user2)
+		game.add_user(user1)
+		game.add_user(user2)
 
-		game.startGame()
+		game.start()
 
 		self.assertEqual(False, game.is_active())
 
-	def test_startGame_statusIsNotChangedIfThereAreNotTwoPlayers(self):
+	def test_start_statusIsNotChangedIfThereAreNotTwoPlayers(self):
 		game = new_game()
-		game.startGame()
+		game.start()
 		self.assertEqual(False, game.is_active())
 
-	def test_getGameUserCurrentTurn_returnsWhiteUserIfThereIsNoHistory(self):
+	def test_get_gameuser_current_turn_returnsWhiteUserIfThereIsNoHistory(self):
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
 
-		self.assertEqual(True, game.getGameUserCurrentTurn().is_white())
+		self.assertEqual(True, game.get_gameuser_current_turn().is_white())
 
-	def test_getGameUserCurrentTurn_returnsBlackIfWhiteMovedLast(self):
+	def test_get_gameuser_current_turn_returnsBlackIfWhiteMovedLast(self):
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
 
-		game.get_piece_at_position("A2").moveToPosition("A3")
+		game.get_piece_at_position("A2").move_to_position("A3")
 
-		self.assertEqual(True, game.getGameUserCurrentTurn().is_black())
+		self.assertEqual(True, game.get_gameuser_current_turn().is_black())
 
-	def test_getAvailableMoves(self):
+	def test_get_available_moves(self):
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
 
 		expectedResult = []
-		actualResult = game.getAvailableMoves()
+		actualResult = game.get_available_moves()
 
 		self.maxDiff = None
 		#self.assertEqual([], actualResult)
@@ -124,10 +124,10 @@ class GameTests(TestCase):
 		game.get_piece_at_position("B8").position = ""
 
 		king = game.get_piece_at_position("E1")
-		self.assertEqual(["F1", "D1", "G1", "C1"], game.getAvailableMovesForPiece(king))
+		self.assertEqual(["F1", "D1", "G1", "C1"], game._get_available_moves_for_piece(king))
 
 		king = game.get_piece_at_position("E8")
-		self.assertEqual(["F8", "D8", "G8", "C8"], game.getAvailableMovesForPiece(king))
+		self.assertEqual(["F8", "D8", "G8", "C8"], game._get_available_moves_for_piece(king))
 
 	def test_move_piece_to_position(self):
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
