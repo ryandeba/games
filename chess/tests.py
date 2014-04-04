@@ -125,9 +125,13 @@ class GameTests(TestCase):
 
 		king = game.get_piece_at_position("E1")
 		self.assertEqual(["F1", "D1", "G1", "C1"], game._get_available_moves_for_piece(king))
+		game.move_piece_to_position(king.id, "G1")
+		self.assertTrue(game.get_piece_at_position("F1").is_rook())
 
 		king = game.get_piece_at_position("E8")
 		self.assertEqual(["F8", "D8", "G8", "C8"], game._get_available_moves_for_piece(king))
+		game.move_piece_to_position(king.id, "C8")
+		self.assertTrue(game.get_piece_at_position("D8").is_rook())
 
 	def test_move_piece_to_position(self):
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
@@ -139,8 +143,6 @@ class GameTests(TestCase):
 		game.move_piece_to_position(game.get_piece_at_position("F1").id, "C4")
 		game.move_piece_to_position(game.get_piece_at_position("A5").id, "A4")
 		game.move_piece_to_position(game.get_piece_at_position("F3").id, "F7")
-
-		self.assertTrue(game.gameuser_is_in_check(gameUser2))
 
 		#TODO: why does this need to get reloaded?
 		gameUser2 = GameUser.objects.get(id = gameUser2.id)

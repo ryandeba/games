@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+import math
 
 GAMESTATUS = {"PENDING": 0, "ACTIVE": 1, "FINISHED": 2}
 COLOR = {"BLACK": 0, "WHITE": 1}
@@ -66,6 +67,11 @@ def get_position_by_offset(startingPosition, offsetX, offsetY):
 	if 1 <= x + offsetX <= 8 and 1 <= y + offsetY <= 8:
 		return convert_coordinates_to_position((x + offsetX, y + offsetY))
 	return ""
+
+def get_horizontal_distance_between_positions(position1, position2):
+	x1, y1 = convert_position_to_coordinates(position1)
+	x2, y2 = convert_position_to_coordinates(position2)
+	return math.fabs(x2 - x1)
 
 def convert_position_to_coordinates(position):
 	if len(position) != 2 or position[0] not in "ABCDEFGH" or position[1] not in "12345678":
@@ -427,9 +433,24 @@ class Game(models.Model):
 	def move_piece_to_position(self, piece_id, position):
 		piece = self.get_piece_by_id(piece_id)
 		if self._can_piece_move_to_position(piece, position):
+			#TODO: en passant
+
+			#castling
+			if piece.is_king() and piece.has_moved() == False:
+				if position == 'C1':
+					self.get_piece_at_position('A1').move_to_position('D1')
+				elif position == 'G1':
+					self.get_piece_at_position('H1').move_to_position('F1')
+				elif position == 'C8':
+					self.get_piece_at_position('A8').move_to_position('D8')
+				elif position == 'G8':
+					self.get_piece_at_position('H8').move_to_position('F8')
+
+			#if there is a piece at the position being moved to, capture it
 			pieceAtPosition = self.get_piece_at_position(position)
 			if pieceAtPosition:
 				pieceAtPosition.move_to_position("")
+
 			piece.move_to_position(position)
 
 			#TODO: maybe these should be methods instead of deleting the properties directly? or the latest history could be appended to the history property
