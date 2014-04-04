@@ -15,7 +15,6 @@
 			}
 			.chessboard td {
 				background-color: #aaa;
-				xbackground: radial-gradient(ellipse at center, #ccc 0%, #bbb 100%);
 				height: 60px;
 				text-align: center;
 				width: 60px;
@@ -23,7 +22,6 @@
 			.chessboard tr:nth-child(even) td:nth-child(even),
 			.chessboard tr:nth-child(odd) td:nth-child(odd) {
 				background-color: #666;
-				xbackground: radial-gradient(ellipse at center, #666 0%, #555 100%);
 			}
 			.chessboard tr:nth-child(9) td,
 			.chessboard tr td:nth-child(1) {
@@ -42,6 +40,11 @@
 
 			.highlight {
 				background-color: yellow !important;
+			}
+
+			#pieces_list *:nth-child(17):before {
+				content: "\a";
+				display: block;
 			}
 		</style>
 
