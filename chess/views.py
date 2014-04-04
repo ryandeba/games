@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.utils.timezone import utc
-from chess.models import loadPendingGames, loadActiveGamesByUserID, newGame, loadGameByID
+from chess.models import load_pending_games, load_active_games_by_user_id, new_game, load_game_by_id
 import json, time, datetime
 
 def datetimeToEpoch(datetime):
@@ -32,7 +32,7 @@ def lobby(request):
 	if request.user.is_authenticated() == False:
 		return HttpResponse(status_code = 401)
 	responseData = []
-	for game in loadPendingGames() | loadActiveGamesByUserID(request.user.id):
+	for game in load_pending_games() | load_active_games_by_user_id(request.user.id):
 		responseData.append({
 			"id": game.id,
 			"users": [gameUser.user.username for gameUser in game.getGameUsers()],
@@ -42,19 +42,19 @@ def lobby(request):
 def newGame_view(request):
 	if request.user.is_authenticated() == False:
 		return HttpResponse(status_code = 401)
-	game = newGame()
+	game = new_game()
 	game.addUser(request.user)
 	return HttpResponse(json.dumps({'game_id': game.id}), content_type="application/json")
 
 def game(request, game_id):
-	game = loadGameByID(game_id)
+	game = load_game_by_id(game_id)
 	game.addUser(request.user)
 
 	datetimeLastUpdated = timestampToDatetime(request.GET.get("lastUpdated", "0"))
 
 	players = [{
 		'id': gameUser.id,
-		'color': gameUser.getColor(),
+		'color': gameUser.get_color(),
 		'username': gameUser.user.username,
 	} for gameUser in game.getGameUsersModifiedSince(datetimeLastUpdated)]
 
@@ -93,6 +93,6 @@ def game(request, game_id):
 	return HttpResponse(json.dumps(response), content_type="application/json")
 
 def movePiece(request, game_id, piece_id, position):
-	game = loadGameByID(game_id)
+	game = load_game_by_id(game_id)
 	game.movePieceToPosition(int(piece_id), position)
 	return HttpResponse(status = 200)

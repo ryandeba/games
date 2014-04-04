@@ -3,9 +3,9 @@ from django.test import TestCase
 from chess.models import *
 
 def setupGame():
-	game = newGame()
-	user1 = newUser(username = "1")
-	user2 = newUser(username = "2")
+	game = new_game()
+	user1 = new_user(username = "1")
+	user2 = new_user(username = "2")
 	gameUser1 = game.addUser(user1)
 	gameUser2 = game.addUser(user2)
 	game.startGame()
@@ -13,36 +13,36 @@ def setupGame():
 
 class UtilityTests(TestCase):
 
-	def test_newGame(self):
-		game = newGame()
+	def test_new_game(self):
+		game = new_game()
 		self.assertEqual(game, Game.objects.get(id = game.id))
 
-	def test_loadGameByID(self):
-		game = newGame()
-		loadedGame = loadGameByID(game.id)
+	def test_load_game_by_id(self):
+		game = new_game()
+		loadedGame = load_game_by_id(game.id)
 		self.assertEqual(game, loadedGame)
 
 	def test_loadPiecesByGame(self):
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
 
-		self.assertEqual(32, len(loadPiecesByGame(game)))
+		self.assertEqual(32, len(load_pieces_by_game(game)))
 
-	def test_convertPositionToCoordinates(self):
-		self.assertEqual((1, 1), convertPositionToCoordinates("A1"))
-		self.assertEqual((2, 2), convertPositionToCoordinates("B2"))
-		self.assertEqual((3, 3), convertPositionToCoordinates("C3"))
+	def test_convert_position_to_coordinates(self):
+		self.assertEqual((1, 1), convert_position_to_coordinates("A1"))
+		self.assertEqual((2, 2), convert_position_to_coordinates("B2"))
+		self.assertEqual((3, 3), convert_position_to_coordinates("C3"))
 
-	def test_convertCoordinatesToPosition(self):
-		self.assertEqual("A1", convertCoordinatesToPosition((1, 1)))
-		self.assertEqual("B2", convertCoordinatesToPosition((2, 2)))
-		self.assertEqual("C3", convertCoordinatesToPosition((3, 3)))
+	def test_convert_coordinates_to_position(self):
+		self.assertEqual("A1", convert_coordinates_to_position((1, 1)))
+		self.assertEqual("B2", convert_coordinates_to_position((2, 2)))
+		self.assertEqual("C3", convert_coordinates_to_position((3, 3)))
 
-	def test_getPositionByOffset(self):
-		self.assertEqual("A1", getPositionByOffset("A1", 0, 0))
-		self.assertEqual("B2", getPositionByOffset("A1", 1, 1))
-		self.assertEqual("A1", getPositionByOffset("B2", -1, -1))
-		self.assertEqual("", getPositionByOffset("A1", -1, -1))
-		self.assertEqual("", getPositionByOffset("H8", 1, 1))
+	def test_get_position_by_offset(self):
+		self.assertEqual("A1", get_position_by_offset("A1", 0, 0))
+		self.assertEqual("B2", get_position_by_offset("A1", 1, 1))
+		self.assertEqual("A1", get_position_by_offset("B2", -1, -1))
+		self.assertEqual("", get_position_by_offset("A1", -1, -1))
+		self.assertEqual("", get_position_by_offset("H8", 1, 1))
 
 class GameTests(TestCase):
 
@@ -57,18 +57,18 @@ class GameTests(TestCase):
 		gameUser2 = game.addUser(user2)
 		gameUser3 = game.addUser(user3)
 
-		self.assertEqual(False, gameUser1.isBlack())
+		self.assertEqual(False, gameUser1.is_black())
 		self.assertEqual(None, gameUserNone)
-		self.assertEqual(True, gameUser2.isBlack())
+		self.assertEqual(True, gameUser2.is_black())
 		self.assertEqual(None, gameUser3)
 
 	def test_startGame(self):
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
 
-		self.assertEqual(True, game.isActive())
+		self.assertEqual(True, game.is_active())
 
 	def test_startGame_statusIsNotChangedIfStatusIsNotPending(self):
-		game = newGame()
+		game = new_game()
 		game.status = GAMESTATUS["FINISHED"]
 		user1 = User.objects.create(username = "1")
 		user2 = User.objects.create(username = "2")
@@ -78,24 +78,24 @@ class GameTests(TestCase):
 
 		game.startGame()
 
-		self.assertEqual(False, game.isActive())
+		self.assertEqual(False, game.is_active())
 
 	def test_startGame_statusIsNotChangedIfThereAreNotTwoPlayers(self):
-		game = newGame()
+		game = new_game()
 		game.startGame()
-		self.assertEqual(False, game.isActive())
+		self.assertEqual(False, game.is_active())
 
 	def test_getGameUserCurrentTurn_returnsWhiteUserIfThereIsNoHistory(self):
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
 
-		self.assertEqual(True, game.getGameUserCurrentTurn().isWhite())
+		self.assertEqual(True, game.getGameUserCurrentTurn().is_white())
 
 	def test_getGameUserCurrentTurn_returnsBlackIfWhiteMovedLast(self):
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
 
 		game.getPieceAtPosition("A2").moveToPosition("A3")
 
-		self.assertEqual(True, game.getGameUserCurrentTurn().isBlack())
+		self.assertEqual(True, game.getGameUserCurrentTurn().is_black())
 
 	def test_getAvailableMoves(self):
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
