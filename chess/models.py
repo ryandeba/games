@@ -15,8 +15,7 @@ XCOORDINATES = ["A","B","C","D","E","F","G","H"]
 
 #TODO: when calling any 'new' function, delete any preloaded data on associated objects
 def new_game():
-	game = Game.objects.create(status = GAMESTATUS["PENDING"])
-	return game
+	return Game.objects.create(status = GAMESTATUS["PENDING"])
 
 def new_user(username):
 	return User.objects.create(username = username)
@@ -196,7 +195,7 @@ class Game(models.Model):
 			possibleMoves = self.filterMovesForGameUser(possibleMoves, gameUser)
 		return possibleMoves
 
-	def gameUserIsInCheck(self, gameUser):
+	def gameuser_is_in_check(self, gameUser):
 		king = self.getKingForGameUser(gameUser)
 		for move in self.getPossibleMovesForGameUser(self.getOtherGameUser(gameUser)):
 			for position in move['positions']:
@@ -231,14 +230,14 @@ class Game(models.Model):
 		result = False
 		originalPosition = piece.position
 		cloneGame = self.clone()
-		pieceAtPosition = self.getPieceAtPosition(position)
+		pieceAtPosition = self.get_piece_at_position(position)
 
 		if pieceAtPosition:
 			pieceAtPosition.position = ""
 		piece.position = position
 		piece.mockMove = True
 
-		if cloneGame.gameUserIsInCheck(piece.gameUser):
+		if cloneGame.gameuser_is_in_check(piece.gameUser):
 			result = True
 
 		piece.position = originalPosition
@@ -301,11 +300,11 @@ class Game(models.Model):
 			y_direction = -1
 
 		position = get_position_by_offset(piece.position, 0, y_direction)
-		if self.getPieceAtPosition(position) == None:
+		if self.get_piece_at_position(position) == None:
 			result.append(position)
 			if piece.hasMoved() == False:
 				position = get_position_by_offset(piece.position, 0, y_direction + y_direction)
-				if self.getPieceAtPosition(position) == None:
+				if self.get_piece_at_position(position) == None:
 					result.append(position)
 
 		#capturing
@@ -376,20 +375,20 @@ class Game(models.Model):
 			if piece.is_black():
 				y = '8'
 			if (
-				self.getPieceAtPosition('F' + y) == None
-				and self.getPieceAtPosition('G' + y) == None
-				and self.getPieceAtPosition('H' + y)
-				and self.getPieceAtPosition('H' + y).hasMoved() == False
+				self.get_piece_at_position('F' + y) == None
+				and self.get_piece_at_position('G' + y) == None
+				and self.get_piece_at_position('H' + y)
+				and self.get_piece_at_position('H' + y).hasMoved() == False
 				and self.playerIsInCheckAfterMovingPieceToPosition(piece, 'F' + y) == False
 				and self.playerIsInCheckAfterMovingPieceToPosition(piece, 'G' + y) == False
 			):
 				result += ['G' + y]
 			if (
-				self.getPieceAtPosition('D' + y) == None
-				and self.getPieceAtPosition('C' + y) == None
-				and self.getPieceAtPosition('B' + y) == None
-				and self.getPieceAtPosition('A' + y)
-				and self.getPieceAtPosition('A' + y).hasMoved() == False
+				self.get_piece_at_position('D' + y) == None
+				and self.get_piece_at_position('C' + y) == None
+				and self.get_piece_at_position('B' + y) == None
+				and self.get_piece_at_position('A' + y)
+				and self.get_piece_at_position('A' + y).hasMoved() == False
 				and self.playerIsInCheckAfterMovingPieceToPosition(piece, 'D' + y) == False
 				and self.playerIsInCheckAfterMovingPieceToPosition(piece, 'C' + y) == False
 			):
@@ -408,32 +407,41 @@ class Game(models.Model):
 		return True
 
 	def positionIsOccupiedBySameColor(self, position, piece):
-		pieceAtPosition = self.getPieceAtPosition(position)
+		pieceAtPosition = self.get_piece_at_position(position)
 		if pieceAtPosition and (pieceAtPosition.gameUser.color == piece.gameUser.color):
 			return True
 		return False
 
 	def positionIsOccupiedByOtherColor(self, position, piece):
-		pieceAtPosition = self.getPieceAtPosition(position)
+		pieceAtPosition = self.get_piece_at_position(position)
 		if pieceAtPosition and (pieceAtPosition.gameUser.color != piece.gameUser.color):
 			return True
 		return False
 
-	def getPieceAtPosition(self, position):
+	def get_piece_at_position(self, position):
 		for piece in self.getPieces():
 			if piece.position == position:
 				return piece
 		return None
 
-	def movePieceToPosition(self, piece_id, position):
+	def move_piece_to_position(self, piece_id, position):
 		piece = self.getPieceByID(piece_id)
-		if self.canPieceMoveToPosition(piece, position):
-			pieceAtPosition = self.getPieceAtPosition(position)
+		if self._can_piece_move_to_position(piece, position):
+			pieceAtPosition = self.get_piece_at_position(position)
 			if pieceAtPosition:
 				pieceAtPosition.moveToPosition("")
 			piece.moveToPosition(position)
 
-	def canPieceMoveToPosition(self, piece, position):
+			#TODO: maybe these should be methods instead of deleting the properties directly? or the latest history could be appended to the history property
+			del self.history
+			del self.possibleMoves
+
+			otherGameUser = self.getOtherGameUser(piece.gameUser)
+			if self.gameuser_is_in_check(otherGameUser):
+				otherGameUser.hasBeenInCheck = True
+				otherGameUser.save()
+
+	def _can_piece_move_to_position(self, piece, position):
 		for move in self.getAvailableMoves():
 			if move['piece'] == piece and position in move['positions']:
 				return True

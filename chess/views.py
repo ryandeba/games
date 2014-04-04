@@ -94,5 +94,5 @@ def game(request, game_id):
 
 def movePiece(request, game_id, piece_id, position):
 	game = load_game_by_id(game_id)
-	game.movePieceToPosition(int(piece_id), position)
+	game.move_piece_to_position(int(piece_id), position)
 	return HttpResponse(status = 200)
