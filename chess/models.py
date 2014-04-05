@@ -339,7 +339,7 @@ class Game(models.Model):
 					and otherPawn == self.get_last_piece_to_move()
 					and self.get_last_history().fromPosition[1] == str(rank_y + (direction_y * 2))
 				):
-					result.append(convert_coordinates_to_position((position_x + direction_x, position_y + 1)))
+					result.append(convert_coordinates_to_position((position_x + direction_x, position_y + direction_y)))
 
 		return result
 
