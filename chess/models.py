@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import User
-import math
 
 GAMESTATUS = {"PENDING": 0, "ACTIVE": 1, "FINISHED": 2}
 COLOR = {"BLACK": 0, "WHITE": 1}
@@ -54,7 +53,7 @@ def load_pieces_by_game_user(gameUser):
 	return Piece.objects.filter(gameUser = gameUser)
 
 def load_history_by_game(game):
-	return History.objects.filter(piece__gameUser__game = game).order_by("id")
+	return History.objects.filter(piece__gameUser__game = game).prefetch_related("piece").order_by("id")
 
 def load_history_by_game_modified_since(game, datetime):
 	return History.objects.filter(piece__gameUser__game = game, datetimeLastModified__gte = datetime)
@@ -67,11 +66,6 @@ def get_position_by_offset(startingPosition, offsetX, offsetY):
 	if 1 <= x + offsetX <= 8 and 1 <= y + offsetY <= 8:
 		return convert_coordinates_to_position((x + offsetX, y + offsetY))
 	return ""
-
-def get_horizontal_distance_between_positions(position1, position2):
-	x1, y1 = convert_position_to_coordinates(position1)
-	x2, y2 = convert_position_to_coordinates(position2)
-	return math.fabs(x2 - x1)
 
 def convert_position_to_coordinates(position):
 	if len(position) != 2 or position[0] not in "ABCDEFGH" or position[1] not in "12345678":
@@ -195,9 +189,8 @@ class Game(models.Model):
 		possibleMoves = []
 		if self.is_active():
 			gameUser = self.get_gameuser_current_turn()
-			possibleMoves = self._get_possible_moves()
+			possibleMoves = self._get_possible_moves_for_gameuser(gameUser)
 			possibleMoves = self._filter_moves_that_leave_player_out_of_check(possibleMoves, gameUser)
-			possibleMoves = self._filter_moves_for_gameuser(possibleMoves, gameUser)
 		return possibleMoves
 
 	def gameuser_is_in_check(self, gameUser):
@@ -320,7 +313,14 @@ class Game(models.Model):
 		if self._position_is_occupied_by_other_color(position, piece):
 			result.append(position)
 
-		#TODO: en passant
+		#en passant
+		#x, y = convert_position_to_coordinates(piece.position)
+		#rank, opponent_rank = 5, 6
+		#if piece.is_black():
+		#	rank, opponent_rank = 4, 3
+		#if y == rank:
+
+
 		return result
 
 	def _get_available_moves_for_piece_knight(self, piece):
