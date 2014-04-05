@@ -126,12 +126,24 @@ class Game(models.Model):
 	def get_history_modified_since(self, datetime):
 		return load_history_by_game_modified_since(self, datetime)
 
+	def get_last_history(self):
+		history = self.get_history()
+		if len(history) == 0:
+			return None
+		return history[history.count() - 1]
+
+	def get_last_piece_to_move(self):
+		hist = self.get_last_history()
+		if hist:
+			return hist.piece
+		return None
+
 	def get_gameuser_current_turn(self):
 		history = self.get_history()
 		gameUsers = self.get_gameusers()
 
 		if len(history):
-			if gameUsers[0] == history[history.count() - 1].piece.gameUser:
+			if gameUsers[0] == self.get_last_piece_to_move().gameUser:
 				return gameUsers[1]
 			return gameUsers[0]
 
@@ -314,12 +326,20 @@ class Game(models.Model):
 			result.append(position)
 
 		#en passant
-		#x, y = convert_position_to_coordinates(piece.position)
-		#rank, opponent_rank = 5, 6
-		#if piece.is_black():
-		#	rank, opponent_rank = 4, 3
-		#if y == rank:
-
+		position_x, position_y = convert_position_to_coordinates(piece.position)
+		rank_y, direction_y = 5, 1
+		if piece.is_black():
+			rank_y, direction_y = 4, -1
+		if position_y == rank_y:
+			for direction_x in [1, -1]:
+				otherPawn = self.get_piece_at_coordinates(position_x + direction_x, position_y)
+				if (
+					otherPawn
+					and otherPawn.is_pawn()
+					and otherPawn == self.get_last_piece_to_move()
+					and self.get_last_history().fromPosition[1] == str(rank_y + (direction_y * 2))
+				):
+					result.append(convert_coordinates_to_position((position_x + direction_x, position_y + 1)))
 
 		return result
 
@@ -429,22 +449,17 @@ class Game(models.Model):
 			if piece.position == position:
 				return piece
 		return None
+	
+	def get_piece_at_coordinates(self, x, y):
+		position = convert_coordinates_to_position((x, y))
+		return self.get_piece_at_position(position)
 
 	def move_piece_to_position(self, piece_id, position):
 		piece = self.get_piece_by_id(piece_id)
 		if self._can_piece_move_to_position(piece, position):
-			#TODO: en passant
 
-			#castling
-			if piece.is_king() and piece.has_moved() == False:
-				if position == 'C1':
-					self.get_piece_at_position('A1').move_to_position('D1')
-				elif position == 'G1':
-					self.get_piece_at_position('H1').move_to_position('F1')
-				elif position == 'C8':
-					self.get_piece_at_position('A8').move_to_position('D8')
-				elif position == 'G8':
-					self.get_piece_at_position('H8').move_to_position('F8')
+			self._move_piece_to_position_en_passant(piece, position)
+			self._move_piece_to_position_castle(piece, position)
 
 			#if there is a piece at the position being moved to, capture it
 			pieceAtPosition = self.get_piece_at_position(position)
@@ -461,6 +476,28 @@ class Game(models.Model):
 			if self.gameuser_is_in_check(otherGameUser):
 				otherGameUser.hasBeenInCheck = True
 				otherGameUser.save()
+
+	def _move_piece_to_position_en_passant(self, piece, position):
+		if piece.is_pawn():
+			from_x, from_y = convert_position_to_coordinates(piece.position)
+			to_x, to_y = convert_position_to_coordinates(position)
+
+			positionToCapture = convert_coordinates_to_position((to_x, from_y))
+			pawnToCapture = self.get_piece_at_position(positionToCapture)
+
+			if from_x != to_x and pawnToCapture:
+				pawnToCapture.move_to_position('')
+
+	def _move_piece_to_position_castle(self, piece, position):
+		if piece.is_king() and piece.has_moved() == False:
+			if position == 'C1':
+				self.get_piece_at_position('A1').move_to_position('D1')
+			elif position == 'G1':
+				self.get_piece_at_position('H1').move_to_position('F1')
+			elif position == 'C8':
+				self.get_piece_at_position('A8').move_to_position('D8')
+			elif position == 'G8':
+				self.get_piece_at_position('H8').move_to_position('F8')
 
 	def _can_piece_move_to_position(self, piece, position):
 		for move in self.get_available_moves():
@@ -558,3 +595,6 @@ class History(models.Model):
 	fromPosition = models.CharField(max_length = 2)
 	toPosition = models.CharField(max_length = 2)
 	datetimeLastModified = models.DateTimeField(auto_now = True)
+
+	def __unicode__(self):
+		return 'id: ' + str(self.id) + ' | piece_id: ' + str(self.piece_id) + ' | from: ' + self.fromPosition + ' | to: ' + self.toPosition

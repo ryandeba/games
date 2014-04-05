@@ -162,3 +162,18 @@ class GameTests(TestCase):
 		#TODO: why does this need to get reloaded?
 		gameUser2 = GameUser.objects.get(id = gameUser2.id)
 		self.assertEqual(True, gameUser2.has_been_in_check())
+
+	def test_en_passant(self):
+		print 'test_en_passant'
+		game, user1, user2, gameUser1, gameUser2 = setupGame()
+
+		game.move_piece_to_position(game.get_piece_at_position("D2").id, "D4")
+		game.move_piece_to_position(game.get_piece_at_position("C7").id, "C5")
+		game.move_piece_to_position(game.get_piece_at_position("D4").id, "D5")
+		game.move_piece_to_position(game.get_piece_at_position("E7").id, "E5")
+
+		pawn = game.get_piece_at_position("D5")
+		self.assertEqual(["D6", "E6"], game._get_available_moves_for_piece(pawn))
+
+		game.move_piece_to_position(game.get_piece_at_position("D5").id, "E6")
+		self.assertEqual(None, game.get_piece_at_position("E5"))
