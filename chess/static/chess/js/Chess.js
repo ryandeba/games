@@ -85,6 +85,7 @@ $(function(){
 					self.get("players").set(response.players, {remove: false});
 					self.get("history").set(response.history, {remove: false});
 					self.set("currentturn_player_id", response.currentturn_player_id);
+					self.set("winner_player_id", response.winner_player_id);
 
 					self.syncColorsToPieces();
 					self.syncPiecesToCells();
@@ -152,6 +153,33 @@ $(function(){
 				url: "/game/" + self.get("id") + "/piece/" + selectedPiece.get("id") + "/move/" + cell.get("position"),
 				success: function(response){ self.load(); }
 			});
+		},
+		getWinner: function(){
+			var winnerID = this.get("winner_player_id")
+			return this.get("players").findWhere({id: winnerID});
+		}
+	});
+
+	var GameStatusView = Backbone.Marionette.ItemView.extend({
+		template: "#statusTemplate",
+		initialize: function(){
+			this.listenTo(this.model, "change", this.render);
+		},
+		serializeData: function(){
+			var data = this.model.toJSON();
+
+			data.currentTurnName = "";
+			var currentTurnPlayer = this.model.get("players").findWhere({isMyTurn: true});
+			if (currentTurnPlayer){
+				data.currentTurnName = currentTurnPlayer.get("username");
+			}
+
+			data.resolution = "stalemate";
+			var winner = this.model.getWinner();
+			if (winner){
+				data.resolution = "checkmate - " + winner.get("username") + " wins!";
+			}
+			return data;
 		}
 	});
 
@@ -269,6 +297,7 @@ $(function(){
 	var GameLayout = Backbone.Marionette.Layout.extend({
 		onRender: function(){
 			this.chessboardRegion.show(new CellsView({collection: this.model.get("cells")}));
+			this.statusRegion.show(new GameStatusView({model: this.model}));
 			this.playersRegion.show(new PlayersView({collection: this.model.get("players")}));
 			this.historyRegion.show(new HistoryCollectionView({collection: this.model.get("history")}));
 			this.piecesRegion.show(new PiecesView({collection: this.model.get("pieces")}));
@@ -279,6 +308,7 @@ $(function(){
 		template: "#gameTemplate",
 		regions: {
 			"chessboardRegion": "#game_chessboard",
+			"statusRegion": "#game_status",
 			"playersRegion": "#game_players",
 			"historyRegion": "#game_history",
 			"piecesRegion": "#game_pieces"

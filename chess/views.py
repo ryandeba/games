@@ -78,6 +78,7 @@ def game(request, game_id):
 		or len(players) > 0
 		or len(pieces) > 0
 	):
+		game.update_status()
 		response = {
 			'status': game.status,
 			'players': players,
@@ -89,7 +90,13 @@ def game(request, game_id):
 			} for move in game.get_available_moves() if move['piece'].gameUser.user == request.user],
 			'lastUpdated': datetimeToEpoch(datetime.datetime.utcnow()),
 			'currentturn_player_id': game.get_gameuser_current_turn().id,
+			'winner_player_id': None,
 		}
+
+		winner = game.get_winner_gameuser()
+		if winner:
+			response['winner_player_id'] = winner.id
+
 	return HttpResponse(json.dumps(response), content_type="application/json")
 
 def movePiece(request, game_id, piece_id, position):

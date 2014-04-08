@@ -89,6 +89,19 @@ class Game(models.Model):
 	def is_finished(self):
 		return self.status == GAMESTATUS["FINISHED"]
 
+	def update_status(self):
+		if self.is_active() and len(self.get_available_moves()) == 0:
+			self.status = GAMESTATUS["FINISHED"]
+			self.save
+		return
+
+	def get_winner_gameuser(self):
+		if self.is_finished():
+			gameUserCurrentTurn = self.get_gameuser_current_turn()
+			if self.gameuser_is_in_check(gameUserCurrentTurn):
+				return self._get_other_gameuser(gameUserCurrentTurn)
+		return None
+
 	def clone(self): # don't ever save a clone
 		clone = Game(id = self.id)
 		clone.pieces = self.get_pieces()
