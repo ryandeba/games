@@ -72,7 +72,9 @@ $(function(){
 			$.ajax({
 				url: "/game/" + self.get("id") + '?lastUpdated=' + self.get("lastUpdated"),
 				complete: function(){
-					self.set("pollTimeout", setTimeout(function(){ self.load(); }, 2000));
+					if (self.get("status") != 2){
+						self.set("pollTimeout", setTimeout(function(){ self.load(); }, 2000));
+					}
 				},
 				success: function(response){
 					if (response.status == undefined) //TODO: implement a better way to check if there is no data
