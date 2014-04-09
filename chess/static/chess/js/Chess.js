@@ -35,7 +35,7 @@ $(function(){
 
 	var newGame = function(){
 		$.ajax({
-			url: "/newGame/",
+			url: "/chess/newGame/",
 			success: function(response){
 				showGame(response.game_id);
 			}
@@ -70,7 +70,7 @@ $(function(){
 			var self = this;
 			self.clearPollTimeout();
 			$.ajax({
-				url: "/game/" + self.get("id") + '?lastUpdated=' + self.get("lastUpdated"),
+				url: "/chess/game/" + self.get("id") + '?lastUpdated=' + self.get("lastUpdated"),
 				complete: function(){
 					if (self.get("status") != 2){
 						self.set("pollTimeout", setTimeout(function(){ self.load(); }, 2000));
@@ -152,7 +152,7 @@ $(function(){
 			var self = this;
 			var selectedPiece = self.get("selectedPiece");
 			$.ajax({
-				url: "/game/" + self.get("id") + "/piece/" + selectedPiece.get("id") + "/move/" + cell.get("position"),
+				url: "/chess/game/" + self.get("id") + "/piece/" + selectedPiece.get("id") + "/move/" + cell.get("position"),
 				success: function(response){ self.load(); }
 			});
 		},
@@ -382,7 +382,7 @@ $(function(){
 		refresh: function(){
 			var self = this;
 			$.ajax({
-				url: "/lobby/",
+				url: "/chess/lobby/",
 				success: function(response){
 					self.reset(response);
 				}
