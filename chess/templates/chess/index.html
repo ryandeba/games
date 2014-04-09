@@ -28,6 +28,9 @@
 				background: #fff !important;
 			}
 
+			.cell.is-selected {
+			}
+
 			.black { color: #000; }
 			.white { color: #fff; }
 			.pawn:after { content: "♟"; }
@@ -108,13 +111,15 @@
 
 		<script type="text/template" id="gameTemplate">
 			<div class="row">
-				<div class="col-md-7">
+				<div class="col-md-6">
 					<table id="game_chessboard" class="chessboard"></table>
 				</div>
-				<div id="game_status" class="col-md-5"></div>
-				<div id="game_players" class="col-md-5"></div>
-				<div id="game_pieces" class="col-md-5"></div>
-				<div id="game_history" class="col-md-5"></div>
+				<div class="col-md-6">
+					<div id="game_status"></div>
+					<div id="game_players"></div>
+					<div id="game_pieces"></div>
+					<div id="game_history"></div>
+				</div>
 			</div>
 		</script>
 
