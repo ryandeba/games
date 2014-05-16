@@ -84,3 +84,7 @@ USE_TZ = True
 STATIC_ROOT = '/opt/myenv/static/'
 
 STATIC_URL = '/static/'
+
+TEMPLATE_DIRS = (
+  BASE_DIR + '/templates/',
+)
