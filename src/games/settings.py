@@ -36,8 +36,8 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'chess',
-    'cardsAgainstHumanity',
+    'games.apps.chess',
+    'games.apps.cardsAgainstHumanity',
 )
 
 MIDDLEWARE_CLASSES = (

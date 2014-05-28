@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.utils.timezone import utc
-from chess.models import load_pending_games, load_active_games_by_user_id, new_game, load_game_by_id
+from games.apps.chess.models import load_pending_games, load_active_games_by_user_id, new_game, load_game_by_id
 import json, time, datetime
 
 def datetimeToEpoch(datetime):
