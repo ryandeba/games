@@ -1,56 +1,56 @@
 $(function(){
 
-	cardsAgainstHumanity.GameMessage = Backbone.Model.extend({
-		defaults: {
-			name: "",
-			message: ""
-		}
-	});
+  cardsAgainstHumanity.GameMessage = Backbone.Model.extend({
+    defaults: {
+      name: "",
+      message: ""
+    }
+  });
 
-	cardsAgainstHumanity.GameMessages = Backbone.Collection.extend({
-		model: cardsAgainstHumanity.GameMessage
-	});
+  cardsAgainstHumanity.GameMessages = Backbone.Collection.extend({
+    model: cardsAgainstHumanity.GameMessage
+  });
 
-	cardsAgainstHumanity.GameMessageView = Backbone.Marionette.ItemView.extend({
-		template: "#template-gamemessage",
+  cardsAgainstHumanity.GameMessageView = Backbone.Marionette.ItemView.extend({
+    template: "#template-gamemessage",
 
-		initialize: function(){
-			this.listenTo(this.model, "change", this.render);
-		}
-	});
+    initialize: function(){
+      this.listenTo(this.model, "change", this.render);
+    }
+  });
 
-	cardsAgainstHumanity.GameMessagesView = Backbone.Marionette.CollectionView.extend({
-		itemView: cardsAgainstHumanity.GameMessageView,
+  cardsAgainstHumanity.GameMessagesView = Backbone.Marionette.CollectionView.extend({
+    itemView: cardsAgainstHumanity.GameMessageView,
 
-		appendHtml: function(collectionView, itemView){
-			collectionView.$el.prepend(itemView.el);
-		}
-	});
+    appendHtml: function(collectionView, itemView){
+      collectionView.$el.prepend(itemView.el);
+    }
+  });
 
-	cardsAgainstHumanity.ChatLayout = Backbone.Marionette.Layout.extend({
-		template: "#template-chat",
+  cardsAgainstHumanity.ChatLayout = Backbone.Marionette.Layout.extend({
+    template: "#template-chat",
 
-		regions: {
-			messagesRegion: "#chat-messages"
-		},
+    regions: {
+      messagesRegion: "#chat-messages"
+    },
 
-		events: {
-			"submit #form-message": "submitMessage"
-		},
+    events: {
+      "submit #form-message": "submitMessage"
+    },
 
-		submitMessage: function(e){
-			e.preventDefault();
-			var data = this.$el.find("#form-message").serialize();
-			this.$el.find("#chat-message").val("");
-			cardsAgainstHumanity.vent.trigger("submitMessage", data);
-		},
+    submitMessage: function(e){
+      e.preventDefault();
+      var data = this.$el.find("#form-message").serialize();
+      this.$el.find("#chat-message").val("");
+      cardsAgainstHumanity.vent.trigger("submitMessage", data);
+    },
 
-		onRender: function(){
-			var self = this;
-			if (_.isUndefined(self.messagesRegion.currentView)){
-				self.messagesRegion.show(new cardsAgainstHumanity.GameMessagesView({ collection: self.collection }));
-			}
-		}
-	});
+    onRender: function(){
+      var self = this;
+      if (_.isUndefined(self.messagesRegion.currentView)){
+        self.messagesRegion.show(new cardsAgainstHumanity.GameMessagesView({ collection: self.collection }));
+      }
+    }
+  });
 
 });

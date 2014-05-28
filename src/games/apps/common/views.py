@@ -5,4 +5,4 @@ from django.contrib.auth.decorators import login_required
 
 @login_required
 def index(request):
-	return render(request, 'common/index.html', {'username': request.user.username})
+  return render(request, 'common/index.html', {'username': request.user.username})

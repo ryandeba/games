@@ -1,226 +1,226 @@
 $(function(){
 
-	cardsAgainstHumanity.Game = Backbone.Model.extend({
-		defaults: {
-			mode: "currentRound",
-			active: undefined,
-			gamePlayers: new cardsAgainstHumanity.GamePlayers(),
-			gameRounds: new cardsAgainstHumanity.GameRounds(),
-			gameMessages: new cardsAgainstHumanity.GameMessages(),
-			thisPlayersAnswerCards: new cardsAgainstHumanity.AnswerCards(),
-			lastUpdated: 0
-		},
+  cardsAgainstHumanity.Game = Backbone.Model.extend({
+    defaults: {
+      mode: "currentRound",
+      active: undefined,
+      gamePlayers: new cardsAgainstHumanity.GamePlayers(),
+      gameRounds: new cardsAgainstHumanity.GameRounds(),
+      gameMessages: new cardsAgainstHumanity.GameMessages(),
+      thisPlayersAnswerCards: new cardsAgainstHumanity.AnswerCards(),
+      lastUpdated: 0
+    },
 
-		initialize: function(){
-			var self = this;
-			self.load();
+    initialize: function(){
+      var self = this;
+      self.load();
 
-			self.listenTo(cardsAgainstHumanity.vent, "showGame:currentRound", self.setModeCurrentRound);
-			self.listenTo(cardsAgainstHumanity.vent, "showGame:players", self.setModePlayers);
-			self.listenTo(cardsAgainstHumanity.vent, "showGame:chat", self.setModeChat);
-			self.listenTo(cardsAgainstHumanity.vent, "showGame:previousRounds", self.setModePreviousRounds);
-			self.listenTo(cardsAgainstHumanity.vent, "game:submitAnswer", self.submitAnswer);
-			self.listenTo(cardsAgainstHumanity.vent, "game:chooseWinner", self.chooseWinner);
-			self.listenTo(cardsAgainstHumanity.vent, "game:updateSubmittedBy", self.updateSubmittedBy);
-			self.listenTo(self.get("gameRounds"), "add", function(){ self.trigger("add:gameRound"); });
-			self.listenTo(self, "addBot", self.addBot);
-			self.listenTo(self, "start", self.start);
-			self.listenTo(self, "change:id", self.load);
+      self.listenTo(cardsAgainstHumanity.vent, "showGame:currentRound", self.setModeCurrentRound);
+      self.listenTo(cardsAgainstHumanity.vent, "showGame:players", self.setModePlayers);
+      self.listenTo(cardsAgainstHumanity.vent, "showGame:chat", self.setModeChat);
+      self.listenTo(cardsAgainstHumanity.vent, "showGame:previousRounds", self.setModePreviousRounds);
+      self.listenTo(cardsAgainstHumanity.vent, "game:submitAnswer", self.submitAnswer);
+      self.listenTo(cardsAgainstHumanity.vent, "game:chooseWinner", self.chooseWinner);
+      self.listenTo(cardsAgainstHumanity.vent, "game:updateSubmittedBy", self.updateSubmittedBy);
+      self.listenTo(self.get("gameRounds"), "add", function(){ self.trigger("add:gameRound"); });
+      self.listenTo(self, "addBot", self.addBot);
+      self.listenTo(self, "start", self.start);
+      self.listenTo(self, "change:id", self.load);
 
-			setInterval(function(){
-				self.load();
-			}, 5000);
-		},
+      setInterval(function(){
+        self.load();
+      }, 5000);
+    },
 
-		setModeCurrentRound: function(){ this.set("mode", "currentRound"); },
-		setModePlayers: function(){ this.set("mode", "players"); },
-		setModeChat: function(){ this.set("mode", "chat"); },
-		setModePreviousRounds: function(){ this.set("mode", "previousRounds"); },
+    setModeCurrentRound: function(){ this.set("mode", "currentRound"); },
+    setModePlayers: function(){ this.set("mode", "players"); },
+    setModeChat: function(){ this.set("mode", "chat"); },
+    setModePreviousRounds: function(){ this.set("mode", "previousRounds"); },
 
-		updateSubmittedBy: function(answerCards){
-			var self = this;
-			answerCards.each(function(answerCard){
-				answerCard.set(
-					"submittedBy",
-					self.get("gamePlayers").findWhere({id: answerCard.get("gameplayer_id")}).get("name")
-				);
-			});
-		},
+    updateSubmittedBy: function(answerCards){
+      var self = this;
+      answerCards.each(function(answerCard){
+        answerCard.set(
+          "submittedBy",
+          self.get("gamePlayers").findWhere({id: answerCard.get("gameplayer_id")}).get("name")
+        );
+      });
+    },
 
-		getCurrentRound: function(){
-			return this.get("gameRounds").last();
-		},
+    getCurrentRound: function(){
+      return this.get("gameRounds").last();
+    },
 
-		load: function(){
-			var self = this;
-			if (self.get("id") == undefined){
-				return;
-			}
-			$.ajax({
-				url: "/cardsAgainstHumanity/game/" + self.get("id") + "?lastUpdated=" + self.get("lastUpdated"),
-				success: function(response){ self.loadSuccess(response); }
-			});
-		},
+    load: function(){
+      var self = this;
+      if (self.get("id") == undefined){
+        return;
+      }
+      $.ajax({
+        url: "/cardsAgainstHumanity/game/" + self.get("id") + "?lastUpdated=" + self.get("lastUpdated"),
+        success: function(response){ self.loadSuccess(response); }
+      });
+    },
 
-		loadSuccess: function(response){
-			this.get("thisPlayersAnswerCards").set(response.thisPlayersAnswerCards || [], {remove: false});
-			this.get("gamePlayers").set(response.gamePlayers || [], {remove: false});
-			this.get("gameRounds").set(response.gameRounds || [], {remove: false});
-			this.get("gameMessages").set(response.gameMessages || [], {remove: false});
-			delete response.thisPlayersAnswerCards;
-			delete response.gamePlayers;
-			delete response.gameRounds;
-			delete response.gameMessages;
-			this.updateGamePlayerNamesIntoGameRounds();
-			this.updateGamePlayerScores();
-			this.updateGamePlayerNamesIntoGameMessages();
-			this.set(response);
-		},
+    loadSuccess: function(response){
+      this.get("thisPlayersAnswerCards").set(response.thisPlayersAnswerCards || [], {remove: false});
+      this.get("gamePlayers").set(response.gamePlayers || [], {remove: false});
+      this.get("gameRounds").set(response.gameRounds || [], {remove: false});
+      this.get("gameMessages").set(response.gameMessages || [], {remove: false});
+      delete response.thisPlayersAnswerCards;
+      delete response.gamePlayers;
+      delete response.gameRounds;
+      delete response.gameMessages;
+      this.updateGamePlayerNamesIntoGameRounds();
+      this.updateGamePlayerScores();
+      this.updateGamePlayerNamesIntoGameMessages();
+      this.set(response);
+    },
 
-		updateGamePlayerNamesIntoGameRounds: function(){
-			var self = this;
-			self.get("gameRounds").each(function(gameRound){
-				gameRound.set(
-					"gamePlayerQuestionerName",
-					self.get("gamePlayers").findWhere({id: gameRound.get("gamePlayerQuestioner_id")}).get("name")
-				);
-			});
-		},
+    updateGamePlayerNamesIntoGameRounds: function(){
+      var self = this;
+      self.get("gameRounds").each(function(gameRound){
+        gameRound.set(
+          "gamePlayerQuestionerName",
+          self.get("gamePlayers").findWhere({id: gameRound.get("gamePlayerQuestioner_id")}).get("name")
+        );
+      });
+    },
 
-		updateGamePlayerNamesIntoGameMessages: function(){
-			var self = this;
-			self.get("gameMessages").each(function(gameMessage){
-				gameMessage.set(
-					"name",
-					self.get("gamePlayers").findWhere({id: gameMessage.get("gameplayer_id")}).get("name")
-				);
-			});
-		},
+    updateGamePlayerNamesIntoGameMessages: function(){
+      var self = this;
+      self.get("gameMessages").each(function(gameMessage){
+        gameMessage.set(
+          "name",
+          self.get("gamePlayers").findWhere({id: gameMessage.get("gameplayer_id")}).get("name")
+        );
+      });
+    },
 
-		updateGamePlayerScores: function(){
-			var self = this;
-			self.get("gamePlayers").each(function(gamePlayer){
-				var score = 0;
-				self.get("gameRounds").each(function(gameRound){
-					score += gameRound.getWinnerGamePlayerID() == gamePlayer.get("id") ? 1 : 0;
-				});
-				gamePlayer.set("score", score);
-			});
-		},
+    updateGamePlayerScores: function(){
+      var self = this;
+      self.get("gamePlayers").each(function(gamePlayer){
+        var score = 0;
+        self.get("gameRounds").each(function(gameRound){
+          score += gameRound.getWinnerGamePlayerID() == gamePlayer.get("id") ? 1 : 0;
+        });
+        gamePlayer.set("score", score);
+      });
+    },
 
-		addBot: function(){
-			var self = this;
-			$.ajax({
-				url: "/cardsAgainstHumanity/game/" + self.get("id") + "/addBot",
-				success: function(response){ self.load(); }
-			});
-		},
+    addBot: function(){
+      var self = this;
+      $.ajax({
+        url: "/cardsAgainstHumanity/game/" + self.get("id") + "/addBot",
+        success: function(response){ self.load(); }
+      });
+    },
 
-		start: function(){
-			var self = this;
-			$.ajax({
-				url: "/cardsAgainstHumanity/game/" + self.get("id") + "/startGame",
-				success: function(response){ self.load(); }
-			});
-		},
+    start: function(){
+      var self = this;
+      $.ajax({
+        url: "/cardsAgainstHumanity/game/" + self.get("id") + "/startGame",
+        success: function(response){ self.load(); }
+      });
+    },
 
-		submitAnswer: function(card){
-			var self = this;
-			$.ajax({
-				url: "/cardsAgainstHumanity/game/" + self.get("id") + "/submitAnswer/" + card.get("card_id"),
-				success: function(response){ 
-					self.get("thisPlayersAnswerCards").remove(card);
-					self.load();
-				}
-			});
-		},
+    submitAnswer: function(card){
+      var self = this;
+      $.ajax({
+        url: "/cardsAgainstHumanity/game/" + self.get("id") + "/submitAnswer/" + card.get("card_id"),
+        success: function(response){ 
+          self.get("thisPlayersAnswerCards").remove(card);
+          self.load();
+        }
+      });
+    },
 
-		chooseWinner: function(card){
-			var self = this;
-			$.ajax({
-				url: "/cardsAgainstHumanity/game/" + self.get("id") + "/chooseWinner/" + card.get("card_id"),
-				success: function(response){ self.load(); }
-			});
-		}
-	});
+    chooseWinner: function(card){
+      var self = this;
+      $.ajax({
+        url: "/cardsAgainstHumanity/game/" + self.get("id") + "/chooseWinner/" + card.get("card_id"),
+        success: function(response){ self.load(); }
+      });
+    }
+  });
 
-	cardsAgainstHumanity.GameLayout = Backbone.Marionette.Layout.extend({
-		template: "#template-game",
+  cardsAgainstHumanity.GameLayout = Backbone.Marionette.Layout.extend({
+    template: "#template-game",
 
-		regions: {
-			navRegion: "#game-nav",
-			mainRegion: "#game-main",
-			answerCardsRegion: "#game-answercards"
-		},
+    regions: {
+      navRegion: "#game-nav",
+      mainRegion: "#game-main",
+      answerCardsRegion: "#game-answercards"
+    },
 
-		initialize: function(){
-			this.listenTo(this.model, "change:active", this.onModelChange);
-			this.listenTo(this.model, "change:mode", this.onModelChange);
-			this.listenTo(this.model, "add:gameRound", this.onModelChange);
-		},
+    initialize: function(){
+      this.listenTo(this.model, "change:active", this.onModelChange);
+      this.listenTo(this.model, "change:mode", this.onModelChange);
+      this.listenTo(this.model, "add:gameRound", this.onModelChange);
+    },
 
-		onClose: function(){
-			this.model.set("id", undefined);
-			this.model.set("lastUpdated", 0);
-		},
+    onClose: function(){
+      this.model.set("id", undefined);
+      this.model.set("lastUpdated", 0);
+    },
 
-		onRender: function(){
-			this.navRegion.show(new cardsAgainstHumanity.GameNavView({ model: this.model }));
-		},
+    onRender: function(){
+      this.navRegion.show(new cardsAgainstHumanity.GameNavView({ model: this.model }));
+    },
 
-		onModelChange: function(){
-			var self = this;
-			var mainRegionView;
-			if (self.model.get("active") == 0 && self.model.get("mode") == "currentRound"){
-				mainRegionView = new cardsAgainstHumanity.PregameView({ model: self.model });
-			}
-			else if (self.model.get("mode") == "currentRound"){
-				mainRegionView = new cardsAgainstHumanity.CurrentRoundView({ model: self.model.getCurrentRound() });
-				if (_.isUndefined(self.answerCardsRegion.currentView)){
-					self.answerCardsRegion.show(new cardsAgainstHumanity.AnswerCardsView({ collection: self.model.get("thisPlayersAnswerCards") }));
-				}
-			}
-			else if (self.model.get("mode") == "chat"){
-				mainRegionView = new cardsAgainstHumanity.ChatLayout({ collection: self.model.get("gameMessages") });
-				self.answerCardsRegion.close();
-			}
-			else if (self.model.get("mode") == "players"){
-				mainRegionView = new cardsAgainstHumanity.GamePlayersView({ collection: self.model.get("gamePlayers") });
-				self.answerCardsRegion.close();
-			}
-			else if (self.model.get("mode") == "previousRounds"){
-				mainRegionView = new cardsAgainstHumanity.GameRoundsView({ collection: self.model.get("gameRounds") });
-				self.answerCardsRegion.close();
-			}
-			if (mainRegionView != undefined){
-				self.mainRegion.show(mainRegionView);
-			}
-		}
-	});
+    onModelChange: function(){
+      var self = this;
+      var mainRegionView;
+      if (self.model.get("active") == 0 && self.model.get("mode") == "currentRound"){
+        mainRegionView = new cardsAgainstHumanity.PregameView({ model: self.model });
+      }
+      else if (self.model.get("mode") == "currentRound"){
+        mainRegionView = new cardsAgainstHumanity.CurrentRoundView({ model: self.model.getCurrentRound() });
+        if (_.isUndefined(self.answerCardsRegion.currentView)){
+          self.answerCardsRegion.show(new cardsAgainstHumanity.AnswerCardsView({ collection: self.model.get("thisPlayersAnswerCards") }));
+        }
+      }
+      else if (self.model.get("mode") == "chat"){
+        mainRegionView = new cardsAgainstHumanity.ChatLayout({ collection: self.model.get("gameMessages") });
+        self.answerCardsRegion.close();
+      }
+      else if (self.model.get("mode") == "players"){
+        mainRegionView = new cardsAgainstHumanity.GamePlayersView({ collection: self.model.get("gamePlayers") });
+        self.answerCardsRegion.close();
+      }
+      else if (self.model.get("mode") == "previousRounds"){
+        mainRegionView = new cardsAgainstHumanity.GameRoundsView({ collection: self.model.get("gameRounds") });
+        self.answerCardsRegion.close();
+      }
+      if (mainRegionView != undefined){
+        self.mainRegion.show(mainRegionView);
+      }
+    }
+  });
 
-	cardsAgainstHumanity.GameNavView = Backbone.Marionette.ItemView.extend({
-		template: "#template-gamenav",
+  cardsAgainstHumanity.GameNavView = Backbone.Marionette.ItemView.extend({
+    template: "#template-gamenav",
 
-		initialize: function(){
-			this.listenTo(this.model, "change", this.render);
-		}
-	});
+    initialize: function(){
+      this.listenTo(this.model, "change", this.render);
+    }
+  });
 
-	cardsAgainstHumanity.PregameView = Backbone.Marionette.ItemView.extend({
-		template: "#template-pregame",
+  cardsAgainstHumanity.PregameView = Backbone.Marionette.ItemView.extend({
+    template: "#template-pregame",
 
-		events: {
-			"click .js-addbot": "addBot",
-			"click .js-startgame": "startGame"
-		},
+    events: {
+      "click .js-addbot": "addBot",
+      "click .js-startgame": "startGame"
+    },
 
-		initialize: function(){
-			this.listenTo(this.model, "change", this.render);
-		},
+    initialize: function(){
+      this.listenTo(this.model, "change", this.render);
+    },
 
-		addBot: function(){ this.model.trigger("addBot"); },
+    addBot: function(){ this.model.trigger("addBot"); },
 
-		startGame: function(){ this.model.trigger("start"); }
-	});
+    startGame: function(){ this.model.trigger("start"); }
+  });
 
 });
