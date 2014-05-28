@@ -1,172 +1,154 @@
+{% extends "common/base.html" %}
 {% load staticfiles %}
-<!DOCTYPE html>
-<html>
-	<head>
-		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Chess</title>
 
-		<link rel="stylesheet" type="text/css" href="{% static 'chess/css/bootstrap.min.css' %}" />
-		<link rel="stylesheet" type="text/css" href="{% static 'chess/css/animate.css' %}" />
-		<style>
-			.chessboard {
-				font-size: 40px;
-			}
-			.chessboard td {
-				background-color: #aaa;
-				height: 60px;
-				text-align: center;
-				width: 60px;
-			}
-			.chessboard tr:nth-child(even) td:nth-child(even),
-			.chessboard tr:nth-child(odd) td:nth-child(odd) {
-				background-color: #666;
-			}
-			.chessboard tr:nth-child(9) td,
-			.chessboard tr td:nth-child(1) {
-				background: #fff !important;
-			}
+{% block title %}Chess{% endblock %}
 
-			.cell.is-selected {
-			}
+{% block css %}
+  <link rel="stylesheet" type="text/css" href="{% static 'chess/css/bootstrap.min.css' %}" />
+  <link rel="stylesheet" type="text/css" href="{% static 'chess/css/animate.css' %}" />
+  <style>
+    .chessboard {
+      font-size: 40px;
+    }
+    .chessboard td {
+      background-color: #aaa;
+      height: 60px;
+      text-align: center;
+      width: 60px;
+    }
+    .chessboard tr:nth-child(even) td:nth-child(even),
+    .chessboard tr:nth-child(odd) td:nth-child(odd) {
+      background-color: #666;
+    }
+    .chessboard tr:nth-child(9) td,
+    .chessboard tr td:nth-child(1) {
+      background: #fff !important;
+    }
 
-			.black { color: #000; }
-			.white { color: #fff; }
-			.pawn:after { content: "♟"; }
-			.rook:after { content: "♜"; }
-			.knight:after { content: "♞"; }
-			.bishop:after { content: "♝"; }
-			.queen:after { content: "♛"; }
-			.king:after { content: "♚"; }
-			.captured { text-decoration: line-through; }
+    .cell.is-selected {
+    }
 
-			.highlight {
-				background-color: yellow !important;
-			}
+    .black { color: #000; }
+    .white { color: #fff; }
+    .pawn:after { content: "♟"; }
+    .rook:after { content: "♜"; }
+    .knight:after { content: "♞"; }
+    .bishop:after { content: "♝"; }
+    .queen:after { content: "♛"; }
+    .king:after { content: "♚"; }
+    .captured { text-decoration: line-through; }
 
-			#pieces_list *:nth-child(17):before {
-				content: "\a";
-				display: block;
-			}
-		</style>
+    .highlight {
+      background-color: yellow !important;
+    }
 
-		<script src="{% static 'chess/js/vendor/jQuery.js' %}"></script>
-		<script src="{% static 'chess/js/vendor/jquery.cookie.js' %}"></script>
-		<script src="{% static 'chess/js/vendor/underscore.js' %}"></script>
-		<script src="{% static 'chess/js/vendor/backbone.js' %}"></script>
-		<script src="{% static 'chess/js/vendor/backbone.marionette.js' %}"></script>
-		<script src="{% static 'chess/js/vendor/bootstrap.js' %}"></script>
+    #pieces_list *:nth-child(17):before {
+      content: "\a";
+      display: block;
+    }
+  </style>
+{% endblock %}
 
-		<script src="{% static 'chess/js/Chess.js' %}"></script>
+{% block js %}
+    <script src="{% static 'chess/js/vendor/jQuery.js' %}"></script>
+    <script src="{% static 'chess/js/vendor/jquery.cookie.js' %}"></script>
+    <script src="{% static 'chess/js/vendor/underscore.js' %}"></script>
+    <script src="{% static 'chess/js/vendor/backbone.js' %}"></script>
+    <script src="{% static 'chess/js/vendor/backbone.marionette.js' %}"></script>
+    <script src="{% static 'chess/js/vendor/bootstrap.js' %}"></script>
 
-		<script>
-			$(function(){
-				Chess.start();
-			});
-		</script>
-	</head>
-	<body class="bg-default">
-		<header class="navbar navbar-default navbar-static-top" style="">
-			<div class="container">
-				<div class="navbar-header">
-					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#header-collapse">
-						<span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
-					</button>
-					<a href="/" class="navbar-brand">Chess</a>
-				</div>
+    <script src="{% static 'chess/js/Chess.js' %}"></script>
 
-				<div class="collapse navbar-collapse" id="header-collapse">
-					<ul class="nav navbar-nav">
-						<li><a href="#">Lobby</a></li>
-					</ul>
-					<ul class="nav navbar-nav navbar-right">
-						<li><a href="{% url 'django.contrib.auth.views.logout' %}">Logout - {{ username }} </a></li>
-					</ul>
-				</div>
-			</div>
-		</header>
+    <script>
+      $(function(){
+        Chess.start();
+      });
+    </script>
+{% endblock %}
 
-		<div id="main" class="container" style="margin-bottom: 60px;">
-		</div>
+{% block header_nav %}
+  <li><a href="#">Lobby</a></li>
+{% endblock %}
 
-		<script type="text/template" id="lobbyGameTemplate">
-			<a href="#game/<%= id %>" class="list-group-item">
-				ID: <%= id %> | Players: <% _.each(users, function(user){ %><%= user %> <% }) %>
-			</a>
-		</script>
+{% block body %}
+  <div id="main" class="container" style="margin-bottom: 60px;">
+  </div>
 
-		<script type="text/template" id="lobbyTemplate">
-			<div class="row">
-				<div class="col-md-12">
-					<h1>Lobby</h1>
-					<p>
-						<button class="btn btn-primary js-btn-newgame">New Game</button>
-						<button class="btn btn-default js-btn-refresh">Refresh</button>
-					</p>
-					<div id="gamelist" class="list-group"></div>
-				</div>
-			</div>
-		</script>
+  <script type="text/template" id="lobbyGameTemplate">
+    <a href="#game/<%= id %>" class="list-group-item">
+      ID: <%= id %> | Players: <% _.each(users, function(user){ %><%= user %> <% }) %>
+    </a>
+  </script>
 
-		<script type="text/template" id="gameTemplate">
-			<div class="row">
-				<div class="col-md-6">
-					<table id="game_chessboard" class="chessboard"></table>
-				</div>
-				<div class="col-md-6">
-					<div id="game_status"></div>
-					<div id="game_players"></div>
-					<div id="game_pieces"></div>
-					<div id="game_history"></div>
-				</div>
-			</div>
-		</script>
+  <script type="text/template" id="lobbyTemplate">
+    <div class="row">
+      <div class="col-md-12">
+        <h1>Lobby</h1>
+        <p>
+          <button class="btn btn-primary js-btn-newgame">New Game</button>
+          <button class="btn btn-default js-btn-refresh">Refresh</button>
+        </p>
+        <div id="gamelist" class="list-group"></div>
+      </div>
+    </div>
+  </script>
 
-		<script type="text/template" id="statusTemplate">
-			<h3>Status</h3>
-			<% if (status == 0){ %>
-				Waiting for another player to join
-			<% } else if (status == 1){ %>
-				Active - <%= currentTurnName %> to move
-			<% } else if (status == 2){ %>
-				Game Over: <%= resolution %>
-			<% } %>
-		</script>
+  <script type="text/template" id="gameTemplate">
+    <div class="row">
+      <div class="col-md-6">
+        <table id="game_chessboard" class="chessboard"></table>
+      </div>
+      <div class="col-md-6">
+        <div id="game_status"></div>
+        <div id="game_players"></div>
+        <div id="game_pieces"></div>
+        <div id="game_history"></div>
+      </div>
+    </div>
+  </script>
 
-		<script type="text/template" id="playersTemplate">
-			<h3>Players</h3>
-			<ol id="players_list"></ol>
-		</script>
+  <script type="text/template" id="statusTemplate">
+    <h3>Status</h3>
+    <% if (status == 0){ %>
+      Waiting for another player to join
+    <% } else if (status == 1){ %>
+      Active - <%= currentTurnName %> to move
+    <% } else if (status == 2){ %>
+      Game Over: <%= resolution %>
+    <% } %>
+  </script>
 
-		<script type="text/template" id="playerTemplate">
-			<%= color %>:
-			<span class="label <%= isMyTurn ? 'label-success' : 'label-default' %>">
-				<%= username %>
-			</span>
-		</script>
+  <script type="text/template" id="playersTemplate">
+    <h3>Players</h3>
+    <ol id="players_list"></ol>
+  </script>
 
-		<script type="text/template" id="piecesTemplate">
-			<h3>Pieces</h3>
-			<div class="well" style="background-color: #bbb; font-size: 23px;">
-				<div id="pieces_list"></div>
-			</div>
-		</script>
+  <script type="text/template" id="playerTemplate">
+    <%= color %>:
+    <span class="label <%= isMyTurn ? 'label-success' : 'label-default' %>">
+      <%= username %>
+    </span>
+  </script>
 
-		<script type="text/template" id="pieceTemplate">
-		</script>
+  <script type="text/template" id="piecesTemplate">
+    <h3>Pieces</h3>
+    <div class="well" style="background-color: #bbb; font-size: 23px;">
+      <div id="pieces_list"></div>
+    </div>
+  </script>
 
-		<script type="text/template" id="historyListTemplate">
-			<h3>Moves</h3>
-			<ol id="history_list"></ol>
-		</script>
+  <script type="text/template" id="pieceTemplate">
+  </script>
 
-		<script type="text/template" id="historyTemplate">
-			From: <%= from %> | To: <%= to %>
-		</script>
+  <script type="text/template" id="historyListTemplate">
+    <h3>Moves</h3>
+    <ol id="history_list"></ol>
+  </script>
 
-		<script type="text/template" id="cellTemplate">
-		</script>
+  <script type="text/template" id="historyTemplate">
+    From: <%= from %> | To: <%= to %>
+  </script>
 
-	</body>
-</html>
+  <script type="text/template" id="cellTemplate">
+  </script>
+{% endblock %}

@@ -1,326 +1,307 @@
+{% extends "common/base.html" %}
 {% load staticfiles %}
-<!DOCTYPE html>
-<html>
-	<head>
-		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Cards Against Humanity</title>
 
-		<link rel="stylesheet" type="text/css" href="{% static 'game/css/bootstrap.min.css' %}" />
-		<link rel="stylesheet" type="text/css" href="{% static 'game/css/animate.css' %}" />
-		<style>
-			.card {
-				border: 1px solid #ddd;
-				border-radius: 5px;
-				box-shadow: 2px 2px 8px #999;
-				display: inline-block;
-				font-size: 13px;
-				padding-bottom: 130%;
-				position: relative;
-				width: 100%;
-			}
-			.card > div {
-				padding: 20px;
-				position: absolute;
-				top: 0; bottom: 0; left: 0; right: 0;
-			}
-			.card.question {
-				background-color: black;
-				color: white;
-			}
-			.card.answer {
-				background-color: white;
-				color: black;
-			}
-			.card.is-clickable:hover {
-				box-shadow: 0px 0px 15px #fff;
-			}
-			.is-clickable {
-				cursor: pointer;
-			}
+{% block title %}Chess{% endblock %}
 
-			#thisPlayersAnswerCards .card {
-				font-size: 11px;
-			}
+{% block css %}
+  <link rel="stylesheet" type="text/css" href="{% static 'game/css/bootstrap.min.css' %}" />
+  <link rel="stylesheet" type="text/css" href="{% static 'game/css/animate.css' %}" />
+  <style>
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-shadow: 2px 2px 8px #999;
+      display: inline-block;
+      font-size: 13px;
+      padding-bottom: 130%;
+      position: relative;
+      width: 100%;
+    }
+    .card > div {
+      padding: 20px;
+      position: absolute;
+      top: 0; bottom: 0; left: 0; right: 0;
+    }
+    .card.question {
+      background-color: black;
+      color: white;
+    }
+    .card.answer {
+      background-color: white;
+      color: black;
+    }
+    .card.is-clickable:hover {
+      box-shadow: 0px 0px 15px #fff;
+    }
+    .is-clickable {
+      cursor: pointer;
+    }
 
-			#game-nav .btn {
-				border-radius: 0;
-			}
+    #thisPlayersAnswerCards .card {
+      font-size: 11px;
+    }
 
-			body {
-				background-color: #ddd;
-			}
-		</style>
+    #game-nav .btn {
+      border-radius: 0;
+    }
 
-		<script src="{% static 'game/js/vendor/jQuery.js' %}"></script>
-		<script src="{% static 'game/js/vendor/jquery.cookie.js' %}"></script>
-		<script src="{% static 'game/js/vendor/underscore.js' %}"></script>
-		<script src="{% static 'game/js/vendor/backbone.js' %}"></script>
-		<script src="{% static 'game/js/vendor/backbone.marionette.js' %}"></script>
-		<script src="{% static 'game/js/vendor/bootstrap.js' %}"></script>
+    body {
+      background-color: #ddd;
+    }
+  </style>
+{% endblock %}
 
-		<script src="{% static 'game/js/cardsAgainstHumanity.js' %}"></script>
-		<script src="{% static 'game/js/User.js' %}"></script>
-		<script src="{% static 'game/js/About.js' %}"></script>
-		<script src="{% static 'game/js/Lobby.js' %}"></script>
-		<script src="{% static 'game/js/GamePlayer.js' %}"></script>
-		<script src="{% static 'game/js/AnswerCard.js' %}"></script>
-		<script src="{% static 'game/js/GameRound.js' %}"></script>
-		<script src="{% static 'game/js/GameMessage.js' %}"></script>
-		<script src="{% static 'game/js/GameSetup.js' %}"></script>
-		<script src="{% static 'game/js/Game.js' %}"></script>
-		<script src="{% static 'game/js/Router.js' %}"></script>
+{% block js %}
+  <script src="{% static 'game/js/vendor/jQuery.js' %}"></script>
+  <script src="{% static 'game/js/vendor/jquery.cookie.js' %}"></script>
+  <script src="{% static 'game/js/vendor/underscore.js' %}"></script>
+  <script src="{% static 'game/js/vendor/backbone.js' %}"></script>
+  <script src="{% static 'game/js/vendor/backbone.marionette.js' %}"></script>
+  <script src="{% static 'game/js/vendor/bootstrap.js' %}"></script>
 
-		<script>
-			$(function(){
-				cardsAgainstHumanity.start();
-			});
-		</script>
-	</head>
-	<body class="bg-default">
-		<header class="navbar navbar-default navbar-static-top" style="">
-			<div class="container">
-				<div class="navbar-header">
-					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#header-collapse">
-						<span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
-					</button>
-					<a href="/" class="navbar-brand">Cards Against Humanity</a>
-				</div>
+  <script src="{% static 'game/js/cardsAgainstHumanity.js' %}"></script>
+  <script src="{% static 'game/js/User.js' %}"></script>
+  <script src="{% static 'game/js/About.js' %}"></script>
+  <script src="{% static 'game/js/Lobby.js' %}"></script>
+  <script src="{% static 'game/js/GamePlayer.js' %}"></script>
+  <script src="{% static 'game/js/AnswerCard.js' %}"></script>
+  <script src="{% static 'game/js/GameRound.js' %}"></script>
+  <script src="{% static 'game/js/GameMessage.js' %}"></script>
+  <script src="{% static 'game/js/GameSetup.js' %}"></script>
+  <script src="{% static 'game/js/Game.js' %}"></script>
+  <script src="{% static 'game/js/Router.js' %}"></script>
 
-				<div class="collapse navbar-collapse" id="header-collapse">
-					<ul class="nav navbar-nav">
-						<li><a href="#lobby">Lobby</a></li>
-						<li><a href="#about">About</a></li>
-					</ul>
+  <script>
+    $(function(){
+      cardsAgainstHumanity.start();
+    });
+  </script>
+{% endblock %}
 
-					<ul class="nav navbar-nav navbar-right">
-						<li><a href="{% url 'django.contrib.auth.views.logout' %}">Logout - {{ playername }} </a></li>
-					</ul>
+{% block header_nav %}
+  <li><a href="#lobby">Lobby</a></li>
+  <li><a href="#about">About</a></li>
+{% endblock %}
 
-				</div>
-			</div>
-		</header>
+{% block body %}
+  <div id="main" class="container" style="margin-bottom: 60px;"></div>
 
-		<div id="main" class="container" style="margin-bottom: 60px;"></div>
+  <script type="text/template" id="template-game">
+    <div id="game-nav" class="row"></div>
 
-		<script type="text/template" id="template-game">
-			<div id="game-nav" class="row"></div>
+    <div id="game-main" class="row" style="background-color: #fff; box-shadow: 0px 0px 10px #999; padding-bottom: 20px;">
+      <div class="col-xs-12">Loading...</div>
+    </div>
 
-			<div id="game-main" class="row" style="background-color: #fff; box-shadow: 0px 0px 10px #999; padding-bottom: 20px;">
-				<div class="col-xs-12">Loading...</div>
-			</div>
+    <hr />
 
-			<hr />
+    <div id="game-answercards" class="row"></div>
+  </script>
 
-			<div id="game-answercards" class="row"></div>
-		</script>
+  <script type="text/template" id="template-gamenav">
+    <div class="btn-group btn-group-justified" style="position: fixed; left: 0; bottom: 0; z-index: 9999;">
+      <a class="btn btn-primary <%= mode == 'currentRound' ? 'active' : '' %>" href="#game/<%= id %>/currentRound">
+        <span class="glyphicon glyphicon-tower"></span>
+      </a>
+      <a class="btn btn-primary <%= mode == 'chat' ? 'active' : '' %>" href="#game/<%= id %>/chat">
+        <span class="glyphicon glyphicon-comment"></span>
+      </a>
+      <a class="btn btn-primary <%= mode == 'players' ? 'active' : '' %>" href="#game/<%= id %>/players">
+        <span class="glyphicon glyphicon-user"></span>
+      </a>
+      <a class="btn btn-primary <%= mode == 'previousRounds' ? 'active' : '' %>" href="#game/<%= id %>/previousRounds">
+        <span class="glyphicon glyphicon-time"></span>
+      </a>
+    </div>
+  </script>
 
-		<script type="text/template" id="template-gamenav">
-			<div class="btn-group btn-group-justified" style="position: fixed; left: 0; bottom: 0; z-index: 9999;">
-				<a class="btn btn-primary <%= mode == 'currentRound' ? 'active' : '' %>" href="#game/<%= id %>/currentRound">
-					<span class="glyphicon glyphicon-tower"></span>
-				</a>
-				<a class="btn btn-primary <%= mode == 'chat' ? 'active' : '' %>" href="#game/<%= id %>/chat">
-					<span class="glyphicon glyphicon-comment"></span>
-				</a>
-				<a class="btn btn-primary <%= mode == 'players' ? 'active' : '' %>" href="#game/<%= id %>/players">
-					<span class="glyphicon glyphicon-user"></span>
-				</a>
-				<a class="btn btn-primary <%= mode == 'previousRounds' ? 'active' : '' %>" href="#game/<%= id %>/previousRounds">
-					<span class="glyphicon glyphicon-time"></span>
-				</a>
-			</div>
-		</script>
+  <script type="text/template" id="template-gamemessage">
+    <strong><%= name %></strong>: <%= message %>
+  </script>
 
-		<script type="text/template" id="template-gamemessage">
-			<strong><%= name %></strong>: <%= message %>
-		</script>
+  <script type="text/template" id="template-chat">
+    <div class="col-xs-12">
+      <h3>Chat</h3>
+      <div class="row">
+        <div class="col-xs-12">
+          <form id="form-message">
+            <div class="input-group">
+              <input type="text" id="chat-message" name="message" maxlength="200" class="form-control" />
+              <span class="input-group-btn">
+                <button type="submit" class="btn btn-default">Send message</button>
+              </span>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="row">
+        <div id="chat-messages" class="col-xs-12"></div>
+      </div>
+    </div>
+  </script>
 
-		<script type="text/template" id="template-chat">
-			<div class="col-xs-12">
-				<h3>Chat</h3>
-				<div class="row">
-					<div class="col-xs-12">
-						<form id="form-message">
-							<div class="input-group">
-								<input type="text" id="chat-message" name="message" maxlength="200" class="form-control" />
-								<span class="input-group-btn">
-									<button type="submit" class="btn btn-default">Send message</button>
-								</span>
-							</div>
-						</form>
-					</div>
-				</div>
-				<div class="row">
-					<div id="chat-messages" class="col-xs-12"></div>
-				</div>
-			</div>
-		</script>
+  <script type="text/template" id="template-currentround">
+    <div class="col-xs-12">
+      <h3>Current Round</h3>
+      <h4><%= gamePlayerQuestionerName %> wants to know...</h4>
+      <div class="row">
+        <div class="col-md-3 col-sm-4 col-xs-6">
+          <div class="card question animated"><div><%= question.replace("_", "________") %></div></div>
+        </div>
+        <div id="currentround-answercards"></div>
+      </div>
+    </div>
+  </script>
 
-		<script type="text/template" id="template-currentround">
-			<div class="col-xs-12">
-				<h3>Current Round</h3>
-				<h4><%= gamePlayerQuestionerName %> wants to know...</h4>
-				<div class="row">
-					<div class="col-md-3 col-sm-4 col-xs-6">
-						<div class="card question animated"><div><%= question.replace("_", "________") %></div></div>
-					</div>
-					<div id="currentround-answercards"></div>
-				</div>
-			</div>
-		</script>
+  <script type="text/template" id="template-answercard">
+    <div class="card answer animated flipInY">
+      <div><%= text %></div>
+    </div>
+  </script>
 
-		<script type="text/template" id="template-answercard">
-			<div class="card answer animated flipInY">
-				<div><%= text %></div>
-			</div>
-		</script>
+  <script type="text/template" id="template-gameroundanswercard">
+    <div class="card answer animated">
+      <div>
+        <% if (faceUp) { %>
+          <%= text %>
+          <br /><br />
+          <% if (submittedBy.length > 0){ %>
+            Submitted by: <%= submittedBy %>
+          <% } %>
+          <%= winner ? '<h4>Winner!</h4>' : '' %>
+        <% } %>
+      </div>
+    </div>
+  </script>
 
-		<script type="text/template" id="template-gameroundanswercard">
-			<div class="card answer animated">
-				<div>
-					<% if (faceUp) { %>
-						<%= text %>
-						<br /><br />
-						<% if (submittedBy.length > 0){ %>
-							Submitted by: <%= submittedBy %>
-						<% } %>
-						<%= winner ? '<h4>Winner!</h4>' : '' %>
-					<% } %>
-				</div>
-			</div>
-		</script>
+  <script type="text/template" id="template-gameround">
+    <% if (isComplete) { %>
+    <div class="well">
+      <%= gamePlayerQuestionerName %> asks: <%= question %>
+      <ul>
+        <% for (var i = 0; i < answerCards.length; i++){ %>
+          <li>
+            <%= answerCards.at(i).get("submittedBy") %>: <%= answerCards.at(i).get("text") %>
+            <% if (answerCards.at(i).get("winner")) { %>
+              - Winner
+            <% } %>
+          </li>
+        <% } %>
+      </ul>
+    </div>
+    <% } %>
+  </script>
 
-		<script type="text/template" id="template-gameround">
-			<% if (isComplete) { %>
-			<div class="well">
-				<%= gamePlayerQuestionerName %> asks: <%= question %>
-				<ul>
-					<% for (var i = 0; i < answerCards.length; i++){ %>
-						<li>
-							<%= answerCards.at(i).get("submittedBy") %>: <%= answerCards.at(i).get("text") %>
-							<% if (answerCards.at(i).get("winner")) { %>
-								- Winner
-							<% } %>
-						</li>
-					<% } %>
-				</ul>
-			</div>
-			<% } %>
-		</script>
+  <script type="text/template" id="template-pregame">
+    <div class="col-xs-12">
+      <h3 class="text-center">Waiting for other players to join</h3>
+      <button type="button" class="btn btn-primary js-addbot">Add bot</button>
+      <% if (gamePlayers.length >= 3){ %>
+        <button type="button" class="btn btn-primary js-startgame">Start Game</button>
+      <% } %>
+      <h4>Players: <%= gamePlayers.length %></h4>
+    </div>
+  </script>
 
-		<script type="text/template" id="template-pregame">
-			<div class="col-xs-12">
-				<h3 class="text-center">Waiting for other players to join</h3>
-				<button type="button" class="btn btn-primary js-addbot">Add bot</button>
-				<% if (gamePlayers.length >= 3){ %>
-					<button type="button" class="btn btn-primary js-startgame">Start Game</button>
-				<% } %>
-				<h4>Players: <%= gamePlayers.length %></h4>
-			</div>
-		</script>
+  <script type="text/template" id="template-gameplayer">
+    <%= name %> (<%= score %>)
+  </script>
 
-		<script type="text/template" id="template-gameplayer">
-			<%= name %> (<%= score %>)
-		</script>
+  <script type="text/template" id="template-lobby">
+    <div class="row">
+      <div class="col-xs-12">
+        <h2>Lobby</h2>
+        <p>
+          <a href="#newgame" class="btn btn-primary">New Game</a>
+          <button class="btn btn-default js-refreshlobby">Refresh</button>
+        </p>
+        <div class="list-group js-lobbygames"></div>
+      </div>
+    </div>
+  </script>
 
-		<script type="text/template" id="template-lobby">
-			<div class="row">
-				<div class="col-xs-12">
-					<h2>Lobby</h2>
-					<p>
-						<a href="#newgame" class="btn btn-primary">New Game</a>
-						<button class="btn btn-default js-refreshlobby">Refresh</button>
-					</p>
-					<div class="list-group js-lobbygames"></div>
-				</div>
-			</div>
-		</script>
+  <script type="text/template" id="template-lobbygamelistitem">
+    <a class="list-group-item" href="#game/<%= id %>">
+      ID: <%= id %> |
+      Players: <%= numberOfPlayers %> |
+      <%
+        var roundedSeconds = Math.round(secondsSinceLastPlayerJoined);
+        var minutes = Math.round(roundedSeconds / 60);
+        var hours = minutes / 60;
+        var formattedTimeString = "just now";
+        if (hours > 1){
+          formattedTimeString = "over an hour ago :(";
+        } else if (minutes > 1) {
+          formattedTimeString = minutes + " minutes ago";
+        }
+      %>
+      Last player joined <%= formattedTimeString %>
+    </a>
+  </script>
 
-		<script type="text/template" id="template-lobbygamelistitem">
-			<a class="list-group-item" href="#game/<%= id %>">
-				ID: <%= id %> |
-				Players: <%= numberOfPlayers %> |
-				<%
-					var roundedSeconds = Math.round(secondsSinceLastPlayerJoined);
-					var minutes = Math.round(roundedSeconds / 60);
-					var hours = minutes / 60;
-					var formattedTimeString = "just now";
-					if (hours > 1){
-						formattedTimeString = "over an hour ago :(";
-					} else if (minutes > 1) {
-						formattedTimeString = minutes + " minutes ago";
-					}
-				%>
-				Last player joined <%= formattedTimeString %>
-			</a>
-		</script>
+  <script type="text/template" id="template-gamesetup">
+    <div class="row">
+      <div class="col-xs-12">
+        <h2>New Game</h2>
 
-		<script type="text/template" id="template-gamesetup">
-			<div class="row">
-				<div class="col-xs-12">
-					<h2>New Game</h2>
+        <form class="js-creategame">
+          Expansions:
+          <input type="hidden" id="expansionlist" name="expansionlist" />
+          <div class="checkbox">
+            <label><input type="checkbox" value="CAHe1" checked="checked">Expansion 1</label>
+          </div>
+          <div class="checkbox">
+            <label><input type="checkbox" value="CAHe2" checked="checked">Expansion 2</label>
+          </div>
+          <div class="checkbox">
+            <label><input type="checkbox" value="CAHe3" checked="checked">Expansion 3</label>
+          </div>
+          <div class="checkbox">
+            <label><input type="checkbox" value="CAHe4" checked="checked">Expansion 4</label>
+          </div>
+          <div class="checkbox">
+            <label><input type="checkbox" value="CAHxmas">Christmas</label>
+          </div>
+          <div class="checkbox">
+            <label><input type="checkbox" value="NSFH">NSFH</label>
+          </div>
+          <div class="checkbox">
+            <label><input type="checkbox" value="Gallifrey">Gallifrey</label>
+          </div>
+          <div class="checkbox">
+            <label><input type="checkbox" value="Ladies Against Humanity">Ladies Against Humanity</label>
+          </div>
 
-					<form class="js-creategame">
-						Expansions:
-						<input type="hidden" id="expansionlist" name="expansionlist" />
-						<div class="checkbox">
-							<label><input type="checkbox" value="CAHe1" checked="checked">Expansion 1</label>
-						</div>
-						<div class="checkbox">
-							<label><input type="checkbox" value="CAHe2" checked="checked">Expansion 2</label>
-						</div>
-						<div class="checkbox">
-							<label><input type="checkbox" value="CAHe3" checked="checked">Expansion 3</label>
-						</div>
-						<div class="checkbox">
-							<label><input type="checkbox" value="CAHe4" checked="checked">Expansion 4</label>
-						</div>
-						<div class="checkbox">
-							<label><input type="checkbox" value="CAHxmas">Christmas</label>
-						</div>
-						<div class="checkbox">
-							<label><input type="checkbox" value="NSFH">NSFH</label>
-						</div>
-						<div class="checkbox">
-							<label><input type="checkbox" value="Gallifrey">Gallifrey</label>
-						</div>
-						<div class="checkbox">
-							<label><input type="checkbox" value="Ladies Against Humanity">Ladies Against Humanity</label>
-						</div>
+          <button type="submit" class="btn btn-primary">Create Game</button>
+          <a href="/" class="btn btn-default">Back to Lobby</a>
+        </form>
+      </div>
+    </div>
+  </script>
 
-						<button type="submit" class="btn btn-primary">Create Game</button>
-						<a href="/" class="btn btn-default">Back to Lobby</a>
-					</form>
-				</div>
-			</div>
-		</script>
+  <script type="text/template" id="template-previousrounds">
+    <div class="col-xs-12">
+      <h3>Previous Rounds</h3>
+      <div id="previousrounds-items"></div>
+    </div>
+  </script>
 
-		<script type="text/template" id="template-previousrounds">
-			<div class="col-xs-12">
-				<h3>Previous Rounds</h3>
-				<div id="previousrounds-items"></div>
-			</div>
-		</script>
-
-		<script type="text/template" id="template-about">
-			<div class="row">
-				<div class="col-xs-12">
-					<h2>About</h2>
-					<p>This game is pretty much a complete rip-off of <a href="http://cardsagainsthumanity.com" target="_blank">Cards Against Humanity</a>, used under the BY-NC-SA 2.0 Creative Commons license.</p>
-					<p>Card data is from <a href="https://github.com/samurailink3/hangouts-against-humanity/" target="_blank">https://github.com/samurailink3/hangouts-against-humanity/</a>.</p>
-					<p>Source code available at <a href="https://github.com/ryandeba/cardsAgainstHumanity" target="_blank">https://github.com/ryandeba/cardsAgainstHumanity</a>.</p>
-					<p>
-						Upcoming features in no particular order:
-						<ul>
-							<li>Support for questions with more than one answer</li>
-							<li>Create your own cards</li>
-							<li>In-game chat</li>
-						</ul>
-					</p>
-				</div>
-			</div>
-		</script>
-	</body>
-</html>
+  <script type="text/template" id="template-about">
+    <div class="row">
+      <div class="col-xs-12">
+        <h2>About</h2>
+        <p>This game is pretty much a complete rip-off of <a href="http://cardsagainsthumanity.com" target="_blank">Cards Against Humanity</a>, used under the BY-NC-SA 2.0 Creative Commons license.</p>
+        <p>Card data is from <a href="https://github.com/samurailink3/hangouts-against-humanity/" target="_blank">https://github.com/samurailink3/hangouts-against-humanity/</a>.</p>
+        <p>Source code available at <a href="https://github.com/ryandeba/cardsAgainstHumanity" target="_blank">https://github.com/ryandeba/cardsAgainstHumanity</a>.</p>
+        <p>
+          Upcoming features in no particular order:
+          <ul>
+            <li>Support for questions with more than one answer</li>
+            <li>Create your own cards</li>
+            <li>In-game chat</li>
+          </ul>
+        </p>
+      </div>
+    </div>
+  </script>
+{% endblock %}

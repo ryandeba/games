@@ -14,7 +14,7 @@ import json, time, datetime
 
 @login_required
 def index(request):
-	return render(request, 'game/index.html', {'playername': request.user.username})
+	return render(request, 'game/index.html', {'username': request.user.username})
 
 def lobby(request):
 	responseData = []

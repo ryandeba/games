@@ -38,6 +38,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'games.apps.chess',
     'games.apps.cardsAgainstHumanity',
+    'games.apps.common',
 )
 
 MIDDLEWARE_CLASSES = (
