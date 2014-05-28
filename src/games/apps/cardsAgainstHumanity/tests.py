@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.utils import timezone
 
-from cardsAgainstHumanity.models import Card, Game, GamePlayer, GameCard, GameRound
+from games.apps.cardsAgainstHumanity.models import Card, Game, GamePlayer, GameCard, GameRound
 from django.contrib.auth.models import User
 
 def createCards():

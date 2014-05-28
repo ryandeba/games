@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from chess.models import *
+from games.apps.chess.models import *
 
 def setupGame():
 	game = new_game()
