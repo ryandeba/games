@@ -14,36 +14,30 @@ def setupGame():
 class UtilityTests(TestCase):
 
 	def test_new_game(self):
-		print 'test_new_game'
 		game = new_game()
 		self.assertEqual(game, Game.objects.get(id = game.id))
 
 	def test_load_game_by_id(self):
-		print 'test_load_game_by_id'
 		game = new_game()
 		loadedGame = load_game_by_id(game.id)
 		self.assertEqual(game, loadedGame)
 
 	def test_loadPiecesByGame(self):
-		print 'test_loadPiecesByGame'
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
 
 		self.assertEqual(32, len(load_pieces_by_game(game)))
 
 	def test_convert_position_to_coordinates(self):
-		print 'test_convert_position_to_coordinates'
 		self.assertEqual((1, 1), convert_position_to_coordinates("A1"))
 		self.assertEqual((2, 2), convert_position_to_coordinates("B2"))
 		self.assertEqual((3, 3), convert_position_to_coordinates("C3"))
 
 	def test_convert_coordinates_to_position(self):
-		print 'test_convert_coordinates_to_position'
 		self.assertEqual("A1", convert_coordinates_to_position((1, 1)))
 		self.assertEqual("B2", convert_coordinates_to_position((2, 2)))
 		self.assertEqual("C3", convert_coordinates_to_position((3, 3)))
 
 	def test_get_position_by_offset(self):
-		print 'test_get_position_by_offset'
 		self.assertEqual("A1", get_position_by_offset("A1", 0, 0))
 		self.assertEqual("B2", get_position_by_offset("A1", 1, 1))
 		self.assertEqual("A1", get_position_by_offset("B2", -1, -1))
@@ -53,7 +47,6 @@ class UtilityTests(TestCase):
 class GameTests(TestCase):
 
 	def test_add_userToGame(self):
-		print 'test_add_userToGame'
 		game = Game.objects.create()
 		user1 = User.objects.create(username = "1")
 		user2 = User.objects.create(username = "2")
@@ -70,13 +63,11 @@ class GameTests(TestCase):
 		self.assertEqual(None, gameUser3)
 
 	def test_start(self):
-		print 'test_start'
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
 
 		self.assertEqual(True, game.is_active())
 
 	def test_start_statusIsNotChangedIfStatusIsNotPending(self):
-		print 'test_start_statusIsNotChangedIfStatusIsNotPending'
 		game = new_game()
 		game.status = GAMESTATUS["FINISHED"]
 		user1 = User.objects.create(username = "1")
@@ -90,19 +81,16 @@ class GameTests(TestCase):
 		self.assertEqual(False, game.is_active())
 
 	def test_start_statusIsNotChangedIfThereAreNotTwoPlayers(self):
-		print 'test_start_statusIsNotChangedIfThereAreNotTwoPlayers'
 		game = new_game()
 		game.start()
 		self.assertEqual(False, game.is_active())
 
 	def test_get_gameuser_current_turn_returnsWhiteUserIfThereIsNoHistory(self):
-		print 'test_get_gameuser_current_turn_returnsWhiteUserIfThereIsNoHistory'
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
 
 		self.assertEqual(True, game.get_gameuser_current_turn().is_white())
 
 	def test_get_gameuser_current_turn_returnsBlackIfWhiteMovedLast(self):
-		print 'test_get_gameuser_current_turn_returnsBlackIfWhiteMovedLast'
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
 
 		game.get_piece_at_position("A2").move_to_position("A3")
@@ -110,7 +98,6 @@ class GameTests(TestCase):
 		self.assertEqual(True, game.get_gameuser_current_turn().is_black())
 
 	def test_get_available_moves(self):
-		print 'test_get_available_moves'
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
 
 		expectedResult = []
@@ -122,7 +109,6 @@ class GameTests(TestCase):
 		self.assertTrue({'piece': game.get_piece_at_position('B1'), 'positions': ['C3', 'A3']} in actualResult)
 
 	def test_castling(self):
-		print 'test_castling'
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
 
 		game.get_piece_at_position("F1").position = ""
@@ -148,7 +134,6 @@ class GameTests(TestCase):
 		self.assertTrue(game.get_piece_at_position("D8").is_rook())
 
 	def test_move_piece_to_position(self):
-		print 'test_move_piece_to_position'
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
 
 		game.move_piece_to_position(game.get_piece_at_position("E2").id, "E3")
@@ -164,7 +149,6 @@ class GameTests(TestCase):
 		self.assertEqual(True, gameUser2.has_been_in_check())
 
 	def test_en_passant(self):
-		print 'test_en_passant'
 		game, user1, user2, gameUser1, gameUser2 = setupGame()
 
 		game.move_piece_to_position(game.get_piece_at_position("D2").id, "D4")
