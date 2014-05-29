@@ -1,8 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 
-from django.contrib.auth import authenticate, login
-from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.utils.timezone import utc
 from games.apps.chess.models import load_pending_games, load_active_games_by_user_id, new_game, load_game_by_id
@@ -17,16 +15,6 @@ def timestampToDatetime(timestamp):
 @login_required
 def index(request):
   return render(request, 'chess/index.html', {'username': request.user.username})
-
-def register(request):
-  username = request.POST['username']
-  password = request.POST['password']
-
-  User.objects.create_user(username = username, password = password)
-  user = authenticate(username = username, password = password)
-  if user is not None:
-    login(request, user)
-  return redirect('/')
 
 def lobby(request):
   if request.user.is_authenticated() == False:

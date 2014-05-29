@@ -50,19 +50,19 @@
 {% endblock %}
 
 {% block js %}
-    <script src="{% static 'common/js/vendor/jQuery.js' %}"></script>
-    <script src="{% static 'common/js/vendor/underscore.js' %}"></script>
-    <script src="{% static 'common/js/vendor/backbone.js' %}"></script>
-    <script src="{% static 'common/js/vendor/backbone.marionette.js' %}"></script>
-    <script src="{% static 'common/js/vendor/bootstrap.js' %}"></script>
+  <script src="{% static 'common/js/vendor/jQuery.js' %}"></script>
+  <script src="{% static 'common/js/vendor/underscore.js' %}"></script>
+  <script src="{% static 'common/js/vendor/backbone.js' %}"></script>
+  <script src="{% static 'common/js/vendor/backbone.marionette.js' %}"></script>
+  <script src="{% static 'common/js/vendor/bootstrap.js' %}"></script>
 
-    <script src="{% static 'chess/js/Chess.js' %}"></script>
+  <script src="{% static 'chess/js/Chess.js' %}"></script>
 
-    <script>
-      $(function(){
-        Chess.start();
-      });
-    </script>
+  <script>
+    $(function(){
+      Chess.start();
+    });
+  </script>
 {% endblock %}
 
 {% block header_nav %}
@@ -70,8 +70,7 @@
 {% endblock %}
 
 {% block body %}
-  <div id="main" class="container" style="margin-bottom: 60px;">
-  </div>
+  <div id="main" class="container" style="margin-bottom: 60px;"></div>
 
   <script type="text/template" id="lobbyGameTemplate">
     <a href="#game/<%= id %>" class="list-group-item">
