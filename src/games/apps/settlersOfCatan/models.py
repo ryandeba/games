@@ -14,7 +14,7 @@ class Hex(models.Model):
 
   game = models.ForeignKey(Game)
   position = models.IntegerField() #TODO: figure out how the position should be stored
-  chit_number = models.IntegerField(choices = CHIT_CHOICES)
+  chit = models.IntegerField(choices = CHIT_CHOICES)
   type = models.CharField(max_length = 6, choices = TYPE_CHOICES)
 
 class Player(models.Model):
