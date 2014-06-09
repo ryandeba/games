@@ -88,4 +88,67 @@ class Game_start_next_round(TestCase):
         self.game.start()
 
     def test_player_order(self):
-        pass
+        #building phase
+        self.assertEqual(self.player1, self.game.round_set.last().player)
+        self.assertEqual(self.player2, self.game.start_next_round().player)
+        self.assertEqual(self.player3, self.game.start_next_round().player)
+        self.assertEqual(self.player3, self.game.start_next_round().player)
+        self.assertEqual(self.player2, self.game.start_next_round().player)
+        self.assertEqual(self.player1, self.game.start_next_round().player)
+
+        #normal play
+        self.assertEqual(self.player1, self.game.start_next_round().player)
+        self.assertEqual(self.player2, self.game.start_next_round().player)
+        self.assertEqual(self.player3, self.game.start_next_round().player)
+        self.assertEqual(self.player1, self.game.start_next_round().player)
+        self.assertEqual(self.player2, self.game.start_next_round().player)
+        self.assertEqual(self.player3, self.game.start_next_round().player)
+
+class Game_get_available_actions(TestCase):
+
+    def setUp(self):
+        self.game = Game.objects.create()
+        self.player1 = self.game.add_player()
+        self.player2 = self.game.add_player()
+        self.player3 = self.game.add_player()
+        self.game.start()
+
+class Game_get_current_player_and_available_actions(TestCase):
+
+    def setUp(self):
+        self.game = Game.objects.create()
+        self.player1 = self.game.add_player()
+        self.player2 = self.game.add_player()
+        self.player3 = self.game.add_player()
+        self.game.start()
+
+    def test_building_phase(self):
+        player, actions = self.game.get_current_player_and_available_actions()
+        self.assertEqual(False, actions['ROLL_DICE'])
+        self.assertEqual(False, actions['BUY_DEVELOPMENT_CARD'])
+        self.assertEqual(False, actions['PLAY_DEVELOPMENT_CARD'])
+        self.assertEqual(True, actions['BUILD_ROAD'])
+        self.assertEqual(False, actions['BUILD_SETTLEMENT'])
+        self.assertEqual(False, actions['BUILD_CITY'])
+
+class Game_build_road(TestCase):
+
+    def setUp(self):
+        self.game = Game.objects.create()
+        self.player1 = self.game.add_player()
+        self.player2 = self.game.add_player()
+        self.player3 = self.game.add_player()
+        self.game.start()
+
+    def test_road_coordinates_are_set(self):
+        road = self.player1.road_set.first()
+        self.game.build_road(road, (3, 5), (4, 5))
+        self.assertEqual(3, road.start_point_grid_x)
+        self.assertEqual(5, road.start_point_grid_y)
+        self.assertEqual(4, road.end_point_grid_x)
+        self.assertEqual(5, road.end_point_grid_y)
+
+    def test_invalid_coordinates_returns_false(self):
+        road = self.player1.road_set.first()
+        #self.assertEqual(False, self.game.build_road(road, 3, 2, 4, 2))
+        self.assertEqual(False, self.game.build_road(road, (3, 5), (3, 5)))
